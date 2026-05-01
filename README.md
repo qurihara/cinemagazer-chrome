@@ -200,20 +200,20 @@ MIT License。詳細は [LICENSE](./LICENSE) を参照。
 
 # English
 
-> A Chrome extension that dynamically switches video playback rate based on subtitle (speech) vs. non-subtitle (non-speech) intervals, for Netflix and Amazon Prime Video.
+> A Chrome extension for Netflix / Amazon Prime Video that enables **extremely fast video viewing** by dynamically switching playback rate between speech and non-speech intervals using subtitle timing.
 
-This Chrome extension reproduces the core idea of the WISS 2011 best-paper / AVI 2012 paper [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) by Kazutaka Kurihara (Tsuda University), in the context of modern streaming services.
+This Chrome extension reproduces the method proposed in the WISS 2011 / AVI 2012 papers [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) by Kazutaka Kurihara (Tsuda University), in the context of modern streaming services (Netflix / Amazon Prime Video).
 
 ## Why "extreme fast-forwarding" works
 
-Long videos contain many segments with **no speech and no subtitles** — establishing shots, silent staging, effect-only scenes. These can be played at 8–16× without much information loss. But uniformly fast-forwarding through speech segments makes the dialogue unintelligible.
+Long videos contain many segments with **no speech and no subtitles** — establishing shots, silent staging, effect-only scenes. These can be played **at very high speeds with little information loss**. But uniformly fast-forwarding through speech segments makes the dialogue progressively harder to follow until comprehension breaks down.
 
 CinemaGazer applies different playback rates depending on whether subtitles are present at the current time:
 
 - **Subtitle present (= speech)** → an *intelligible* fast rate (default 1.5×)
 - **No subtitle (= non-speech)** → a *skip-through* rate (default 4.0×)
 
-This is a direct port of the original paper's two-level fast-forwarding to streaming services in 2026.
+These rates are switched dynamically. This is a direct port of the original paper's two-level fast-forwarding technique to streaming services.
 
 ## Demo videos (original system)
 
@@ -243,7 +243,7 @@ These demo videos were released by the original paper to illustrate the concept 
 | Netflix (`netflix.com`) | ✅ Stable | Subtitles are auto-enabled by the extension. |
 | Amazon Prime Video (`primevideo.com`, `amazon.co.jp/gp/video/...`, `amazon.com/...`) | ⚠️ Experimental | Subtitle timing can drift on some titles. Default off; toggle in popup. |
 
-If subtitles are off on a given title, rate switching is bypassed and playback stays at `speechRate` as a safe fallback.
+If subtitles are off on a given title, rate switching is disabled.
 
 ## Install (developer mode)
 
@@ -257,8 +257,8 @@ If subtitles are off on a given title, rate switching is bypassed and playback s
 
 1. Start playing a video on Netflix or Prime Video.
 2. Netflix subtitles are auto-enabled. For Prime, enable subtitles manually and tick "Prime Video で有効化" (enable for Prime Video) in the popup.
-3. The HUD shows current rate and overall compression ratio.
-4. Click the HUD or the toolbar icon to open settings.
+3. The top-right indicator shows current rate and overall compression ratio.
+4. Click the top-right indicator or the toolbar icon to open settings.
 
 ### Settings
 
@@ -270,9 +270,9 @@ If subtitles are off on a given title, rate switching is bypassed and playback s
 | Min non-speech gap | Skip-rate is only applied to non-speech gaps longer than this | 0.4s |
 | Subtitle offset | Timing nudge for subtitles vs. video (±5s) | 0.0s |
 | Subtitle overlay | Render subtitles in the center; hide native subtitles | OFF |
-| Show HUD | Top-right HUD visibility | ON |
-| Enable on Netflix | Per-site gate | ON |
-| Enable on Prime Video | Per-site gate (experimental) | OFF |
+| Show indicator | Top-right speed indicator visibility | ON |
+| Enable on Netflix | Enable on Netflix | ON |
+| Enable on Prime Video | Enable on Amazon Prime Video (experimental) | OFF |
 
 ## Architecture
 
@@ -309,9 +309,9 @@ The extension collects **no personal data**. Subtitle timing data is parsed loca
 
 ## Troubleshooting
 
-**HUD is not visible.** Check the per-site toggle (e.g. "Netflix で有効化") in the popup. Check `chrome://extensions` for errors.
+**Top-right speed indicator (HUD) is not visible.** Check the per-site toggle (e.g. "Netflix で有効化") in the popup. Check `chrome://extensions` for errors.
 
-**HUD shows "字幕未取得" (subtitles not captured).** The extension only sees subtitles after playback starts (the player fetches them lazily). Reload the page and start playback. In DevTools console:
+**Indicator shows "字幕未取得" / "no subtitles" (subtitles not captured).** The extension only sees subtitles after playback starts (the player fetches them lazily). Reload the page and start playback. In DevTools console:
 
 ```js
 CinemaGazer.info()    // content-script-side state
