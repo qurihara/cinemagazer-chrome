@@ -2,7 +2,7 @@
 
 > 字幕情報から発話区間を抽出し、発話/無音で再生速度を動的に切り替える Netflix / Prime Video 用の Chrome 拡張
 
-WISS2011 ベストペーパー
+WISS2011論文
 [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864)
 （栗原一貴, 2011）のコア手法を、現代のWebブラウザ環境（Netflix / Amazon Prime Video）で再現する Chrome 拡張です。
 
