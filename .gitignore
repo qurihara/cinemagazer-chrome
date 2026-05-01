@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Build outputs (公開ZIPはリリース時に生成するためリポジトリには入れない)
+*.zip
+cinemagazer-*.zip
+
+# Temporary
+*.tmp
+*.bak
+*.log
+core.js.tmp
+
+# Node (もし将来ビルドツールを入れた場合)
+node_modules/
+package-lock.json
+yarn.lock
+.npm/

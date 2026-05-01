@@ -1,0 +1,58 @@
+/* CinemaGazer - overlay & HUD */
+
+#cg-hud.cg-hud {
+  position: fixed;
+  z-index: 2147483646;
+  top: 12px;
+  right: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(60,120,200,.85);
+  color: #fff;
+  font: 600 12px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: .02em;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  transition: filter .12s, transform .12s;
+}
+#cg-hud.cg-hud:hover { filter: brightness(1.15); transform: translateY(-1px); }
+#cg-hud.cg-hud:active { filter: brightness(.9); transform: translateY(0); }
+
+#cg-overlay.cg-overlay {
+  position: fixed;
+  z-index: 2147483645;
+  /* left / top / transform は JS で video 要素中央に合わせて動的に設定 */
+  max-width: 80vw;
+  padding: 8px 14px;
+  text-align: center;
+  font: 700 28px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic UI", system-ui, sans-serif;
+  color: #fff;
+  text-shadow:
+    0 0 4px rgba(0,0,0,.9),
+    0 0 8px rgba(0,0,0,.7),
+    1px 1px 0 #000,
+    -1px 1px 0 #000,
+    1px -1px 0 #000,
+    -1px -1px 0 #000;
+  pointer-events: none;
+  white-space: pre-wrap;
+  will-change: left, top, opacity;
+}
+
+/* オーバーレイ有効時：プレイヤー側のネイティブ字幕を非表示にして中央表示に一本化 */
+html.cg-overlay-active .player-timedtext,
+html.cg-overlay-active .player-timedtext-text-container,
+html.cg-overlay-active [data-uia="player-timedtext"],
+html.cg-overlay-active [data-uia="player-caption"],
+html.cg-overlay-active .player-timedtext-text-container > div,
+html.cg-overlay-active .atvwebplayersdk-captions-overlay,
+html.cg-overlay-active .atvwebplayersdk-captions-text,
+html.cg-overlay-active [class*="captions-overlay"],
+html.cg-overlay-active [class*="captionsOverlay"],
+html.cg-overlay-active [class*="captionContainer"],
+html.cg-overlay-active [class*="captioncontainer"] {
+  display: none !important;
+  visibility: hidden !important;
+}

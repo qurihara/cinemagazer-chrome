@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "CinemaGazer",
+  "version": "0.1.0",
+  "description": "字幕(発話区間)と非発話区間で再生速度を動的に切り替えるNetflix/Prime Video用の高速鑑賞拡張",
+  "author": "Kazutaka Kurihara (Tsuda University)",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "*://*.netflix.com/*",
+    "*://*.nflxvideo.net/*",
+    "*://*.primevideo.com/*",
+    "*://*.amazon.co.jp/*",
+    "*://*.amazon.com/*",
+    "*://*.media-amazon.com/*",
+    "*://*.aiv-cdn.net/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "CinemaGazer",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.netflix.com/*"],
+      "js": ["inject/interceptor.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "*://*.primevideo.com/*",
+        "*://*.amazon.co.jp/gp/video/*",
+        "*://*.amazon.co.jp/dp/*",
+        "*://*.amazon.com/gp/video/*",
+        "*://*.amazon.com/dp/*"
+      ],
+      "js": ["inject/interceptor.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": ["*://*.netflix.com/*"],
+      "js": ["content/core.js", "content/netflix.js"],
+      "css": ["content/overlay.css"],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "*://*.primevideo.com/*",
+        "*://*.amazon.co.jp/gp/video/*",
+        "*://*.amazon.co.jp/dp/*",
+        "*://*.amazon.com/gp/video/*",
+        "*://*.amazon.com/dp/*"
+      ],
+      "js": ["content/core.js", "content/prime.js"],
+      "css": ["content/overlay.css"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject/interceptor.js"],
+      "matches": [
+        "*://*.netflix.com/*",
+        "*://*.primevideo.com/*",
+        "*://*.amazon.co.jp/*",
+        "*://*.amazon.com/*"
+      ]
+    }
+  ]
+}
