@@ -36,7 +36,11 @@
     domSubtitleText: '',
     domSubtitleInSpeech: false,
     domSilenceStartedAtVideoTime: -1,  // 字幕が消えた瞬間の video.currentTime
-    lastSubtitleHandledAt: 0
+    lastSubtitleHandledAt: 0,
+    // 次エピソード先読み対策: 現在の字幕がある状態で新しい字幕が届いたら pending として保留し、
+    // URL変化（=エピソード切替）のタイミングで current に昇格させる。
+    pendingIntervals: null,
+    pendingIntervalsUrl: ''
   };
 
   const log  = (...a) => console.log('%c[CinemaGazer]', 'color:#c33;font-weight:bold', ...a);
@@ -179,20 +183,31 @@
       return;
     }
     STATE.subtitleStores.set(url, { intervals, parsedAt: Date.now() });
-    STATE.lastSubtitleHandledAt = Date.now();
     const f = intervals[0], l = intervals[intervals.length - 1];
-    log('subtitle parsed: ' + intervals.length + ' cues  '
-        + 'first=' + f[0].toFixed(2) + 's last_end=' + l[1].toFixed(2) + 's  '
-        + 'url=' + url.slice(0, 80));
-    // 動画 duration が取れていれば、字幕の最終 cue が動画長を超えていないかチェック
     const v = STATE.video;
     if (v && isFinite(v.duration) && l[1] > v.duration * 1.5) {
       warn('subtitle last_end (' + l[1].toFixed(1) + 's) >> video.duration ('
            + v.duration.toFixed(1) + 's). tickRate/frameRate 解釈ミスの可能性。');
     }
-    STATE.currentIntervals = intervals;
-    STATE.currentIntervalIdx = -1;
-    STATE.compressionCache.cueCount = -1; // invalidate
+    // 既に current がある = 視聴中のエピソードに字幕が付いている。
+    // この状態で新しい字幕が届くのは「次エピソードのプリロード」のケースが多い（Netflix特有）。
+    // そのまま上書きすると視聴中エピソードに次エピソードの cue が混入してしまうので、
+    // pending に保留して URL変化（エピソード切替）のタイミングで current に昇格させる。
+    if (STATE.currentIntervals.length > 0) {
+      STATE.pendingIntervals = intervals;
+      STATE.pendingIntervalsUrl = url;
+      log('subtitle queued (pending, will swap on URL change): ' + intervals.length + ' cues  '
+          + 'first=' + f[0].toFixed(2) + 's last_end=' + l[1].toFixed(2) + 's  '
+          + 'url=' + url.slice(0, 80));
+    } else {
+      STATE.currentIntervals = intervals;
+      STATE.currentIntervalIdx = -1;
+      STATE.compressionCache.cueCount = -1;
+      STATE.lastSubtitleHandledAt = Date.now();
+      log('subtitle parsed: ' + intervals.length + ' cues  '
+          + 'first=' + f[0].toFixed(2) + 's last_end=' + l[1].toFixed(2) + 's  '
+          + 'url=' + url.slice(0, 80));
+    }
   }
 
   // TTML2 のパラメータ名前空間
@@ -674,14 +689,17 @@
         lastUrl = location.href;
         lastUrlChangeAt = Date.now();
         log('url change', lastUrl);
-        const recent = STATE.lastSubtitleHandledAt && (Date.now() - STATE.lastSubtitleHandledAt < 2000);
-        if (recent) {
-          log('  → 直前2秒以内に字幕受信済み。currentIntervals は維持して新エピソードに引き継ぎ');
-          // currentIntervalIdx と圧縮率キャッシュは念のためリセット（時刻が0に戻るため）
+        if (STATE.pendingIntervals) {
+          // プリロード済みの次エピソード字幕を昇格
+          log('  → swap pending → current (' + STATE.pendingIntervals.length + ' cues)');
+          STATE.currentIntervals = STATE.pendingIntervals;
           STATE.currentIntervalIdx = -1;
           STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+          STATE.pendingIntervals = null;
+          STATE.pendingIntervalsUrl = '';
+          STATE.lastSubtitleHandledAt = Date.now();
         } else {
-          log('  → 直近字幕無し。currentIntervals をクリア（新字幕XHRの到着を待つ／force-refreshに期待）');
+          log('  → no pending. clear currentIntervals; wait for new XHR / force-refresh');
           STATE.currentIntervals = [];
           STATE.currentIntervalIdx = -1;
           STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
@@ -794,6 +812,7 @@
         domObserverActive: STATE.domObserverActive,
         domSubtitleInSpeech: STATE.domSubtitleInSpeech,
         domSubtitleText: STATE.domSubtitleText,
+        pendingIntervalsCount: STATE.pendingIntervals ? STATE.pendingIntervals.length : 0,
         stores,
         settings: STATE.settings
       };
