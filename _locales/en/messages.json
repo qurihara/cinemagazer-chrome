@@ -54,5 +54,8 @@
   },
   "hudCompressedSuffix": {
     "message": "% compressed"
+  },
+  "hudRemainingFormat": {
+    "message": "{time} left"
   }
 }

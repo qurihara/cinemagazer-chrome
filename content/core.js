@@ -54,6 +54,29 @@
     return fallback;
   }
 
+  // 秒数を H:MM:SS / M:SS にフォーマット
+  function formatHMS(sec) {
+    if (sec == null || !isFinite(sec) || sec < 0) return null;
+    sec = Math.round(sec);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    const pad = (n) => (n < 10 ? '0' + n : '' + n);
+    return h > 0 ? (h + ':' + pad(m) + ':' + pad(s)) : (m + ':' + pad(s));
+  }
+
+  // 残り視聴時間を、現在の圧縮率で見続けた場合の見積もりとして算出。
+  // XHRモード（全体の圧縮率が計算可能）でのみ意味のある値を返す。
+  // DOMフォールバック時は cue 配列が無く、瞬間 playbackRate での外挿は精度が悪い（速度がピョコピョコ切り替わるため）ので null を返して非表示にする。
+  function computeRemainingViewingTime() {
+    const v = STATE.video;
+    if (!v || !isFinite(v.duration) || v.duration <= 0) return null;
+    const ratio = computeCompressionRatio();
+    if (ratio == null || ratio <= 0) return null;
+    const remaining = Math.max(0, v.duration - v.currentTime);
+    return remaining * ratio;
+  }
+
   // 現在の cue 集合と速度設定で、動画全体の総長が何倍に圧縮されるかを計算
   function computeCompressionRatio() {
     const v = STATE.video;
@@ -500,8 +523,17 @@
           tail = i18n('hudInit', 'init…');
         }
       }
+      // 残り視聴時間（このペースで見続けた場合の見積もり）
+      const remSec = computeRemainingViewingTime();
+      const remStr = formatHMS(remSec);
+      let remPart = '';
+      if (remStr) {
+        const tpl = i18n('hudRemainingFormat', '残り {time}');
+        remPart = tpl.replace('{time}', remStr);
+      }
       const parts = [label, target.toFixed(2) + '×'];
       if (tail) parts.push(tail);
+      if (remPart) parts.push(remPart);
       STATE.hudEl.textContent = parts.join('  ');
       // tooltip にモード説明を表示
       const modeHint = usedDomFallback
@@ -758,6 +790,7 @@
         firstCue: cur[0],
         lastCue: cur[cur.length - 1],
         compressionRatio: computeCompressionRatio(),
+        remainingViewingSec: computeRemainingViewingTime(),
         domObserverActive: STATE.domObserverActive,
         domSubtitleInSpeech: STATE.domSubtitleInSpeech,
         domSubtitleText: STATE.domSubtitleText,

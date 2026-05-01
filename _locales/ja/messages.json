@@ -54,5 +54,8 @@
   },
   "hudCompressedSuffix": {
     "message": "% 圧縮"
+  },
+  "hudRemainingFormat": {
+    "message": "残り {time}"
   }
 }
