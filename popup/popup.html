@@ -7,7 +7,7 @@
 </head>
 <body>
   <header>
-    <h1>CinemaGazer</h1>
+    <h1 data-i18n="popupHeader">CinemaGazer</h1>
     <label class="switch">
       <input type="checkbox" id="enabled">
       <span></span>
@@ -16,44 +16,42 @@
 
   <section>
     <div class="row">
-      <label for="speechRate">発話区間の速度</label>
+      <label for="speechRate" data-i18n="labelSpeechRate">発話区間の速度</label>
       <input type="range" id="speechRate" min="1" max="3" step="0.1">
       <output id="speechRateOut">1.5×</output>
     </div>
     <div class="row">
-      <label for="silentRate">無音区間の速度</label>
+      <label for="silentRate" data-i18n="labelSilentRate">無音区間の速度</label>
       <input type="range" id="silentRate" min="1" max="16" step="0.5">
       <output id="silentRateOut">4.0×</output>
     </div>
     <div class="row">
-      <label for="silentMinGap">高速化する最小無音(秒)</label>
+      <label for="silentMinGap" data-i18n="labelMinGap">高速化する最小無音(秒)</label>
       <input type="range" id="silentMinGap" min="0" max="2" step="0.1">
       <output id="silentMinGapOut">0.4s</output>
     </div>
     <div class="row">
-      <label for="subtitleOffset">字幕タイミング微調整(秒)</label>
+      <label for="subtitleOffset" data-i18n="labelOffset">字幕タイミング微調整(秒)</label>
       <input type="range" id="subtitleOffset" min="-5" max="5" step="0.1">
       <output id="subtitleOffsetOut">0.0s</output>
     </div>
     <div class="row checkbox">
-      <label><input type="checkbox" id="overlayEnabled"> 字幕オーバーレイ(中央表示)</label>
+      <label><input type="checkbox" id="overlayEnabled"> <span data-i18n="labelOverlay">字幕オーバーレイ(中央表示)</span></label>
     </div>
     <div class="row checkbox">
-      <label><input type="checkbox" id="showHud"> 速度表示</label>
+      <label><input type="checkbox" id="showHud"> <span data-i18n="labelShowHud">速度表示</span></label>
     </div>
 
     <hr style="border:none;border-top:1px solid #eee;margin:10px 0">
     <div class="row checkbox">
-      <label><input type="checkbox" id="enableNetflix"> Netflixで有効化</label>
+      <label><input type="checkbox" id="enableNetflix"> <span data-i18n="labelEnableNetflix">Netflixで有効化</span></label>
     </div>
     <div class="row checkbox">
-      <label><input type="checkbox" id="enablePrime"> Prime Videoで有効化（実験的）</label>
+      <label><input type="checkbox" id="enablePrime"> <span data-i18n="labelEnablePrime">Prime Videoで有効化（実験的）</span></label>
     </div>
   </section>
 
-  <footer>
-    Netflix / Prime Video の字幕情報から発話区間を抽出して動的に速度切替します
-  </footer>
+  <footer data-i18n="footerText">Netflix / Prime Video の字幕情報から発話区間を抽出して動的に速度切替します</footer>
 
   <script src="popup.js"></script>
 </body>

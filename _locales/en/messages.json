@@ -1,0 +1,61 @@
+{
+  "extName": {
+    "message": "CinemaGazer",
+    "description": "Extension name."
+  },
+  "extDescription": {
+    "message": "Variable-rate viewing for Netflix / Prime Video, driven by subtitle timing.",
+    "description": "Extension description shown in the Web Store and chrome://extensions."
+  },
+  "popupHeader": {
+    "message": "CinemaGazer"
+  },
+  "labelSpeechRate": {
+    "message": "Speech rate"
+  },
+  "labelSilentRate": {
+    "message": "Silent rate"
+  },
+  "labelMinGap": {
+    "message": "Min silent gap (sec)"
+  },
+  "labelOffset": {
+    "message": "Subtitle timing offset (sec)"
+  },
+  "labelOverlay": {
+    "message": "Subtitle overlay (centered)"
+  },
+  "labelShowHud": {
+    "message": "Show HUD"
+  },
+  "labelEnableNetflix": {
+    "message": "Enable on Netflix"
+  },
+  "labelEnablePrime": {
+    "message": "Enable on Prime Video (experimental)"
+  },
+  "footerText": {
+    "message": "Extracts speech intervals from Netflix / Prime Video subtitles and switches playback rate dynamically."
+  },
+  "hudSpeech": {
+    "message": "Speech"
+  },
+  "hudSilent": {
+    "message": "Silent"
+  },
+  "hudInit": {
+    "message": "init…"
+  },
+  "hudNotCaptured": {
+    "message": "no subtitles"
+  },
+  "hudCompression": {
+    "message": "$PCT$% compressed",
+    "placeholders": {
+      "pct": { "content": "$1", "example": "65" }
+    }
+  },
+  "hudClickHint": {
+    "message": "Click to open CinemaGazer settings"
+  }
+}

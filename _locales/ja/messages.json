@@ -1,0 +1,61 @@
+{
+  "extName": {
+    "message": "CinemaGazer",
+    "description": "拡張名。"
+  },
+  "extDescription": {
+    "message": "字幕情報から発話区間を抽出し、Netflix / Prime Video の再生速度を動的に切り替える Chrome 拡張です。",
+    "description": "ストアと chrome://extensions に表示される説明。"
+  },
+  "popupHeader": {
+    "message": "CinemaGazer"
+  },
+  "labelSpeechRate": {
+    "message": "発話区間の速度"
+  },
+  "labelSilentRate": {
+    "message": "無音区間の速度"
+  },
+  "labelMinGap": {
+    "message": "高速化する最小無音(秒)"
+  },
+  "labelOffset": {
+    "message": "字幕タイミング微調整(秒)"
+  },
+  "labelOverlay": {
+    "message": "字幕オーバーレイ(中央表示)"
+  },
+  "labelShowHud": {
+    "message": "速度表示"
+  },
+  "labelEnableNetflix": {
+    "message": "Netflixで有効化"
+  },
+  "labelEnablePrime": {
+    "message": "Prime Videoで有効化（実験的）"
+  },
+  "footerText": {
+    "message": "Netflix / Prime Video の字幕情報から発話区間を抽出して動的に速度切替します"
+  },
+  "hudSpeech": {
+    "message": "発話"
+  },
+  "hudSilent": {
+    "message": "無音"
+  },
+  "hudInit": {
+    "message": "init…"
+  },
+  "hudNotCaptured": {
+    "message": "字幕未取得"
+  },
+  "hudCompression": {
+    "message": "$PCT$% 圧縮",
+    "placeholders": {
+      "pct": { "content": "$1", "example": "65" }
+    }
+  },
+  "hudClickHint": {
+    "message": "クリックでCinemaGazer設定を開く"
+  }
+}

@@ -36,6 +36,15 @@
   const log  = (...a) => console.log('%c[CinemaGazer]', 'color:#c33;font-weight:bold', ...a);
   const warn = (...a) => console.warn('[CinemaGazer]', ...a);
 
+  // i18n: chrome.i18n.getMessage のラッパー（取得できなければフォールバック文字列を返す）
+  function t(key, fallback, sub) {
+    try {
+      const m = chrome.i18n.getMessage(key, sub != null ? [String(sub)] : undefined);
+      if (m) return m;
+    } catch (e) {}
+    return fallback;
+  }
+
   // 現在の cue 集合と速度設定で、動画全体の総長が何倍に圧縮されるかを計算
   function computeCompressionRatio() {
     const v = STATE.video;
@@ -433,11 +442,17 @@
 
     if (STATE.hudEl) {
       const cueCount = STATE.currentIntervals.length;
-      const label = (cueCount === 0) ? '—' : (inSpeech ? '発話' : '無音');
+      const label = (cueCount === 0) ? '—' : (inSpeech ? t('hudSpeech', '発話') : t('hudSilent', '無音'));
       const ratio = computeCompressionRatio();
-      const tail = ratio != null
-        ? (Math.round((1 - ratio) * 100) + '% 圧縮')
-        : (STATE.interceptorReady ? '字幕未取得' : 'init…');
+      let tail;
+      if (ratio != null) {
+        const pct = Math.round((1 - ratio) * 100);
+        tail = t('hudCompression', pct + '% 圧縮', pct);
+      } else if (STATE.interceptorReady) {
+        tail = t('hudNotCaptured', '字幕未取得');
+      } else {
+        tail = t('hudInit', 'init…');
+      }
       STATE.hudEl.textContent = label + '  ' + target.toFixed(2) + '×  ' + tail;
       let bg;
       if (cueCount === 0) bg = 'rgba(120,120,120,.85)';
@@ -521,7 +536,7 @@
     const el = document.createElement('div');
     el.id = 'cg-hud';
     el.className = 'cg-hud';
-    el.title = 'クリックでCinemaGazer設定を開く';
+    el.title = t('hudClickHint', 'クリックでCinemaGazer設定を開く');
     el.addEventListener('click', (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
