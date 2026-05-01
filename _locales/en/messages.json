@@ -14,10 +14,10 @@
     "message": "Speech rate"
   },
   "labelSilentRate": {
-    "message": "Silent rate"
+    "message": "Non-speech rate"
   },
   "labelMinGap": {
-    "message": "Min silent gap (sec)"
+    "message": "Min non-speech gap (sec)"
   },
   "labelOffset": {
     "message": "Subtitle timing offset (sec)"
@@ -41,7 +41,7 @@
     "message": "Speech"
   },
   "hudSilent": {
-    "message": "Silent"
+    "message": "Non-speech"
   },
   "hudInit": {
     "message": "init…"

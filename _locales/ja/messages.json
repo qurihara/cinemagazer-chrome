@@ -14,10 +14,10 @@
     "message": "発話区間の速度"
   },
   "labelSilentRate": {
-    "message": "無音区間の速度"
+    "message": "無音声区間の速度"
   },
   "labelMinGap": {
-    "message": "高速化する最小無音(秒)"
+    "message": "高速化する最小無音声(秒)"
   },
   "labelOffset": {
     "message": "字幕タイミング微調整(秒)"
@@ -41,7 +41,7 @@
     "message": "発話"
   },
   "hudSilent": {
-    "message": "無音"
+    "message": "無音声"
   },
   "hudInit": {
     "message": "init…"

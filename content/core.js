@@ -445,7 +445,7 @@
 
     if (STATE.hudEl) {
       const cueCount = STATE.currentIntervals.length;
-      const label = (cueCount === 0) ? '—' : (inSpeech ? i18n('hudSpeech', '発話') : i18n('hudSilent', '無音'));
+      const label = (cueCount === 0) ? '—' : (inSpeech ? i18n('hudSpeech', '発話') : i18n('hudSilent', '無音声'));
       const ratio = computeCompressionRatio();
       let tail;
       if (ratio != null) {

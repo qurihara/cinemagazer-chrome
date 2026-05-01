@@ -1,6 +1,6 @@
 # CinemaGazer (Chrome拡張版)
 
-> 字幕情報から発話区間を抽出し、発話/無音で再生速度を動的に切り替える Netflix / Prime Video 用の Chrome 拡張
+> 字幕情報から発話区間を抽出し、発話/無音声で再生速度を動的に切り替える Netflix / Prime Video 用の Chrome 拡張
 
 **🇬🇧 English version of this README is available below — please scroll down to the [English](#english) section.**
 
@@ -17,7 +17,7 @@ WISS2011 ベストペーパー
 CinemaGazer は、
 
 - **字幕がある区間 = 発話扱い** → "理解できる速さ"（既定 1.5×）
-- **字幕がない区間 = 無音扱い** → "飛ばせる速さ"（既定 4.0×）
+- **字幕がない区間 = 無音声扱い** → "飛ばせる速さ"（既定 4.0×）
 
 を `video.playbackRate` で動的に切替えます。元論文のtwo-level fast-forwardingをそのまま現代のストリーミングサービスに適用した形です。
 
@@ -34,8 +34,8 @@ CinemaGazer は、
 
 ## 主な機能
 
-- **発話区間 / 無音区間 で再生速度を自動切替**
-- **HUD 表示**: 画面右上に「現在の状態（発話/無音）・速度・全体の圧縮率」を常時表示。HUDをクリックすると設定popupが開く
+- **発話区間 / 無音声区間 で再生速度を自動切替**
+- **HUD 表示**: 画面右上に「現在の状態（発話/無音声）・速度・全体の圧縮率」を常時表示。HUDをクリックすると設定popupが開く
 - **字幕の中央オーバーレイ表示**（"centering"）。プレイヤー側のネイティブ字幕は自動的に非表示にして一本化
 - **Netflix では字幕を自動でON**（プレイヤー内部APIで `setTimedTextTrack`）
 - **サイト別ON/OFF**（既定: Netflix=ON, Prime=OFF）
@@ -78,8 +78,8 @@ CinemaGazer は、
 |---|---|---|
 | 全体ON/OFF | 拡張の全機能 | ON |
 | 発話区間の速度 | 字幕表示中に適用する再生速度 | 1.5× |
-| 無音区間の速度 | 字幕なし区間に適用する再生速度 | 4.0× |
-| 高速化する最小無音(秒) | この秒数より短い無字幕gapは高速化しない（短いポーズで切替えると見づらいため） | 0.4s |
+| 無音声区間の速度 | 字幕なし区間に適用する再生速度 | 4.0× |
+| 高速化する最小無音声(秒) | この秒数より短い無字幕gapは高速化しない（短いポーズで切替えると見づらいため） | 0.4s |
 | 字幕タイミング微調整 | 字幕と動画の体感ズレを補正（±5秒） | 0.0s |
 | 字幕オーバーレイ | 動画中央に字幕を表示。ネイティブ字幕は非表示化 | OFF |
 | 速度表示 | 画面右上のHUD表示 | ON |
@@ -200,7 +200,7 @@ MIT License。詳細は [LICENSE](./LICENSE) を参照。
 
 # English
 
-> A Chrome extension that dynamically switches video playback rate based on subtitle (speech) vs. non-subtitle (silent) intervals, for Netflix and Amazon Prime Video.
+> A Chrome extension that dynamically switches video playback rate based on subtitle (speech) vs. non-subtitle (non-speech) intervals, for Netflix and Amazon Prime Video.
 
 This Chrome extension reproduces the core idea of the WISS 2011 best-paper / AVI 2012 paper [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) by Kazutaka Kurihara (Tsuda University), in the context of modern streaming services.
 
@@ -211,7 +211,7 @@ Long videos contain many segments with **no speech and no subtitles** — establ
 CinemaGazer applies different playback rates depending on whether subtitles are present at the current time:
 
 - **Subtitle present (= speech)** → an *intelligible* fast rate (default 1.5×)
-- **No subtitle (= silent)** → a *skip-through* rate (default 4.0×)
+- **No subtitle (= non-speech)** → a *skip-through* rate (default 4.0×)
 
 This is a direct port of the original paper's two-level fast-forwarding to streaming services in 2026.
 
@@ -228,8 +228,8 @@ These demo videos were released by the original paper to illustrate the concept 
 
 ## Features
 
-- Automatic playback rate switching between speech / silent intervals
-- HUD in the top-right corner showing current state (speech / silent), current rate, and total compression ratio. Click the HUD to open settings popup.
+- Automatic playback rate switching between speech / non-speech intervals
+- HUD in the top-right corner showing current state (speech / non-speech), current rate, and total compression ratio. Click the HUD to open settings popup.
 - Center subtitle overlay ("centering") with fade — native player subtitles are hidden so only the centered overlay shows.
 - Auto-enable subtitles on Netflix (via the player's internal `setTimedTextTrack` API).
 - Per-site enable/disable (default: Netflix = ON, Prime = OFF).
@@ -266,8 +266,8 @@ If subtitles are off on a given title, rate switching is bypassed and playback s
 |---|---|---|
 | Master ON/OFF | Master switch for the extension | ON |
 | Speech rate | Playback rate during subtitle intervals | 1.5× |
-| Silent rate | Playback rate during non-subtitle intervals | 4.0× |
-| Min silent gap | Skip-rate is only applied to silent gaps longer than this | 0.4s |
+| Non-speech rate | Playback rate during non-subtitle intervals | 4.0× |
+| Min non-speech gap | Skip-rate is only applied to non-speech gaps longer than this | 0.4s |
 | Subtitle offset | Timing nudge for subtitles vs. video (±5s) | 0.0s |
 | Subtitle overlay | Render subtitles in the center; hide native subtitles | OFF |
 | Show HUD | Top-right HUD visibility | ON |
@@ -340,13 +340,4 @@ python3 -c "import json; json.load(open('manifest.json'))"
 
 - Original papers:
   - 栗原一貴 (2011). "CinemaGazer: a System for Watching Videos at Very High Speed", WISS 2011 (Best Paper Award). [arXiv:1110.0864](https://arxiv.org/abs/1110.0864)
-  - Kazutaka Kurihara (2012). "CinemaGazer: A System for Watching Videos at Very High Speed," *Proceedings of the 11th International Working Conference on Advanced Visual Interfaces (AVI'12)*, pp.108–115.
-- Chrome extension implementation: Kazutaka Kurihara (Tsuda University).
-
-## License
-
-MIT License. See [LICENSE](./LICENSE).
-
-## Contact
-
-Kazutaka Kurihara (Tsuda University) — kurihara@tsuda.ac.jp
+  - Kazutaka Kurihara (2012). "CinemaGazer: A System for Watching
