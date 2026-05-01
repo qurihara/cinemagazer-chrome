@@ -49,13 +49,10 @@
   "hudNotCaptured": {
     "message": "字幕未取得"
   },
-  "hudCompression": {
-    "message": "$PCT$% 圧縮",
-    "placeholders": {
-      "pct": { "content": "$1", "example": "65" }
-    }
-  },
   "hudClickHint": {
     "message": "クリックでCinemaGazer設定を開く"
+  },
+  "hudCompressedSuffix": {
+    "message": "% 圧縮"
   }
 }

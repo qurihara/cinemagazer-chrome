@@ -37,10 +37,12 @@
   const warn = (...a) => console.warn('[CinemaGazer]', ...a);
 
   // i18n: chrome.i18n.getMessage のラッパー（取得できなければフォールバック文字列を返す）
-  function t(key, fallback, sub) {
+  function t(key, fallback) {
     try {
-      const m = chrome.i18n.getMessage(key, sub != null ? [String(sub)] : undefined);
-      if (m) return m;
+      if (chrome && chrome.i18n && typeof chrome.i18n.getMessage === 'function') {
+        const m = chrome.i18n.getMessage(key);
+        if (m) return m;
+      }
     } catch (e) {}
     return fallback;
   }
@@ -447,7 +449,7 @@
       let tail;
       if (ratio != null) {
         const pct = Math.round((1 - ratio) * 100);
-        tail = t('hudCompression', pct + '% 圧縮', pct);
+        tail = pct + t('hudCompressedSuffix', '% 圧縮');
       } else if (STATE.interceptorReady) {
         tail = t('hudNotCaptured', '字幕未取得');
       } else {
@@ -637,6 +639,7 @@
     applySettingsImmediate();
     injectInterceptor();
     if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', watchForVideo, { once: true });
       document.addEventListener('DOMContentLoaded', watchForVideo, { once: true });
     } else {
       watchForVideo();
