@@ -169,7 +169,7 @@ CinemaGazer/
 
 ```bash
 # パッケージ化
-zip -r cinemagazer-0.1.0.zip \
+zip -r cinemagazer-0.2.0.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
@@ -326,7 +326,7 @@ Vanilla JavaScript, no build step.
 
 ```bash
 # Package
-zip -r cinemagazer-0.1.0.zip \
+zip -r cinemagazer-0.2.0.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
@@ -334,10 +334,4 @@ zip -r cinemagazer-0.1.0.zip \
 # Syntax check
 node --check background.js inject/interceptor.js content/core.js content/netflix.js content/prime.js popup/popup.js
 python3 -c "import json; json.load(open('manifest.json'))"
-```
-
-## Credits
-
-- Original papers:
-  - 栗原一貴 (2011). "CinemaGazer: a System for Watching Videos at Very High Speed", WISS 2011 (Best Paper Award). [arXiv:1110.0864](https://arxiv.org/abs/1110.0864)
-  - Kazutaka Kurihara (2012). "CinemaGazer: A System for Watching
+``
