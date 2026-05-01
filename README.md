@@ -1,25 +1,25 @@
 # CinemaGazer (Chrome拡張版)
 
-> 字幕情報から音声区間を抽出し、音声/非音声で再生速度を動的に切り替える Netflix / Prime Video 用の Chrome 拡張
+> 字幕情報から音声区間を抽出し、音声/非音声で再生速度を動的に切り替えることで極限的な高速動画鑑賞を可能にする Netflix / Prime Video 用の Chrome 拡張
 
 **🇬🇧 English version of this README is available below — please scroll down to the [English](#english) section.**
 
 ---
 
-WISS2011 ベストペーパー
+WISS2011 論文
 [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864)
-（栗原一貴, 2011）のコア手法を、現代のWebブラウザ環境（Netflix / Amazon Prime Video）で再現する Chrome 拡張です。
+（栗原一貴, 2011）の提案手法を、現代のWebブラウザ環境（Netflix / Amazon Prime Video）で再現する Chrome 拡張です。
 
 ## なぜ"極限的な高速鑑賞"が成立するのか
 
-長い動画には「実は字幕も声も無い」区間が大量に含まれます。風景・無言の演出・効果音だけのシーン――これらは **8〜16倍速で見ても情報損失が少ない**。一方で、人が話している区間まで一律に高速化すると言葉が追えなくなる。
+長い動画には「字幕も声も無い」区間が大量に含まれます。風景・無言の演出・効果音だけのシーン――これらは **非常に高速で見ても情報損失が少ない**。一方で、人が話している区間まで一律に高速化すると言葉が追えなくなり、理解できなくなっていく。
 
 CinemaGazer は、
 
 - **字幕がある区間 = 音声扱い** → "理解できる速さ"（既定 1.5×）
 - **字幕がない区間 = 非音声扱い** → "飛ばせる速さ"（既定 4.0×）
 
-を `video.playbackRate` で動的に切替えます。元論文のtwo-level fast-forwardingをそのまま現代のストリーミングサービスに適用した形です。
+を動的に切替えます。元論文のtwo-level fast-forwardingをそのまま現代のストリーミングサービスに適用した形です。
 
 ## デモビデオ（元システム）
 
@@ -49,7 +49,7 @@ CinemaGazer は、
 | Netflix (`netflix.com`) | ✅ 安定 | 字幕は拡張が自動でONにする |
 | Amazon Prime Video (`primevideo.com`, `amazon.co.jp/gp/video/...`, `amazon.com/...`) | ⚠️ 実験的 | コンテンツによって字幕のタイミングがズレることがあるため既定OFF。popup で有効化可能 |
 
-字幕がOFFのコンテンツでは速度切替は無効化され、安全側で `speechRate` のまま再生されます。
+字幕がOFFのコンテンツでは速度切替は無効化されます。
 
 ## インストール
 
@@ -69,8 +69,8 @@ CinemaGazer は、
 
 1. Netflix / Prime Video で動画を再生
 2. （Netflixは自動で字幕ON。Primeは手動で字幕をONに、popup で「Prime Video で有効化」もONに）
-3. 画面右上のHUDで現在の速度と圧縮率を確認
-4. HUDをクリック or Chromeツールバーの拡張アイコンから設定を開く
+3. 画面右上の表示で現在の速度と圧縮率を確認
+4. 画面右上の表示をクリック or Chromeツールバーの拡張アイコンから設定を開く
 
 ### 設定項目（popup）
 
@@ -82,9 +82,9 @@ CinemaGazer は、
 | 高速化する最小非音声(秒) | この秒数より短い無字幕gapは高速化しない（短いポーズで切替えると見づらいため） | 0.4s |
 | 字幕タイミング微調整 | 字幕と動画の体感ズレを補正（±5秒） | 0.0s |
 | 字幕オーバーレイ | 動画中央に字幕を表示。ネイティブ字幕は非表示化 | OFF |
-| 速度表示 | 画面右上のHUD表示 | ON |
-| Netflixで有効化 | サイト別ゲート | ON |
-| Prime Videoで有効化 | サイト別ゲート（実験的） | OFF |
+| 速度表示 | 画面右上の表示 | ON |
+| Netflixで有効化 | Netflixで有効化 | ON |
+| Prime Videoで有効化 | Amazno Prime Videoで有効化（実験的） | OFF |
 
 ## アーキテクチャ
 
@@ -146,7 +146,7 @@ CinemaGazer/
 
 ## トラブルシューティング
 
-### HUDが出ない
+### HUD（右上の速度表示）が出ない
 - popup の「Netflixで有効化」など対象サイトのトグルがONか
 - `chrome://extensions` でエラーが出ていないか
 
