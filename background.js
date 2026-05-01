@@ -4,8 +4,8 @@
 
 const DEFAULTS = {
   enabled: true,
-  speechRate: 1.5,    // 発話区間（字幕あり）の再生速度
-  silentRate: 4.0,    // 非発話区間（字幕なし）の再生速度
+  speechRate: 1.5,    // 音声区間（字幕あり）の再生速度
+  silentRate: 4.0,    // 非音声区間（字幕なし）の再生速度
   silentMinGap: 0.4,  // この秒数より長い無字幕区間のみ高速化（短いポーズで切り替えると見づらい）
   overlayEnabled: false, // 字幕オーバーレイ（centering+fading）。既定では無効
   overlayFadeMs: 200,

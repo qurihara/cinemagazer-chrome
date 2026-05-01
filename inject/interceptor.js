@@ -54,7 +54,10 @@
   }
   window.__cgSeenUrls = seen;
 
+  // 直近に字幕を捕捉した時刻（force-refresh の判断に使う）
+  let __cgLastSubtitleAt = 0;
   function postSubtitle(url, body, source) {
+    __cgLastSubtitleAt = Date.now();
     try {
       window.postMessage({ __cg: true, type: 'CG_SUBTITLE', url: String(url || ''), body, source }, '*');
     } catch (e) {
@@ -182,11 +185,59 @@
       return false;
     }
   }
+  // 字幕トラックを一旦OFF→ONに切り替えて、Netflix に字幕XHRを強制発生させる。
+  // 次エピソード自動遷移時に Netflix が字幕を内部キャッシュから引いて XHR を出さない問題への対策。
+  function forceSubtitleRefresh() {
+    try {
+      if (!/netflix\.com$/i.test(location.hostname)) return false;
+      const w = window;
+      const playerApp = w.netflix && w.netflix.appContext && w.netflix.appContext.state && w.netflix.appContext.state.playerApp;
+      if (!playerApp || typeof playerApp.getAPI !== 'function') return false;
+      const api = playerApp.getAPI();
+      if (!api || !api.videoPlayer) return false;
+      const ids = api.videoPlayer.getAllPlayerSessionIds();
+      if (!ids || !ids.length) return false;
+      const sess = api.videoPlayer.getVideoPlayerBySessionId(ids[ids.length - 1]);
+      if (!sess || typeof sess.getTimedTextTrack !== 'function') return false;
+      const tracks = sess.getTimedTextTrackList();
+      if (!tracks || !tracks.length) return false;
+      const cur = sess.getTimedTextTrack();
+      if (!cur || cur.isNoneTrack) return false;
+      const offTrack = tracks.find(function (t) { return t.isNoneTrack; });
+      if (!offTrack) return false;
+      console.log('%c[CinemaGazer] force-refresh subtitles (off->on) for new episode', 'color:#c33');
+      sess.setTimedTextTrack(offTrack);
+      setTimeout(function () {
+        try { sess.setTimedTextTrack(cur); } catch (e) {}
+      }, 200);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // URL変化検知＋リトライカウンタ＋force-refreshタイマー
+  let __cgAutoLastUrl = location.href;
   let __cgAutoTries = 0;
-  const __cgAutoTimer = setInterval(function () {
+  let __cgUrlChangedAt = 0;
+  let __cgForceRefreshDone = false;
+  setInterval(function () {
+    if (location.href !== __cgAutoLastUrl) {
+      __cgAutoLastUrl = location.href;
+      __cgAutoTries = 0;
+      __cgUrlChangedAt = Date.now();
+      __cgForceRefreshDone = false;
+      console.log('%c[CinemaGazer] interceptor: url change -> restart auto-enable', 'color:#c33', location.href);
+    }
     __cgAutoTries++;
-    if (tryEnableNetflixSubs() || __cgAutoTries > 60) {
-      clearInterval(__cgAutoTimer);
+    if (__cgAutoTries <= 30 || __cgAutoTries % 10 === 0) {
+      tryEnableNetflixSubs();
+    }
+    if (__cgUrlChangedAt && !__cgForceRefreshDone && Date.now() - __cgUrlChangedAt > 2500) {
+      if (__cgLastSubtitleAt < __cgUrlChangedAt) {
+        forceSubtitleRefresh();
+      }
+      __cgForceRefreshDone = true;
     }
   }, 1000);
 })();

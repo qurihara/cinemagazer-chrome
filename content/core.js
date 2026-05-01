@@ -30,7 +30,13 @@
     lastShownText: '',
     lastShownAt: 0,
     interceptorReady: false,
-    compressionCache: { duration: 0, cueCount: 0, settingsHash: '', ratio: null }
+    compressionCache: { duration: 0, cueCount: 0, settingsHash: '', ratio: null },
+    // DOM観察ベースのフォールバック（XHRで字幕が取れなかった時用）
+    domObserverActive: false,
+    domSubtitleText: '',
+    domSubtitleInSpeech: false,
+    domSilenceStartedAtVideoTime: -1,  // 字幕が消えた瞬間の video.currentTime
+    lastSubtitleHandledAt: 0
   };
 
   const log  = (...a) => console.log('%c[CinemaGazer]', 'color:#c33;font-weight:bold', ...a);
@@ -150,6 +156,7 @@
       return;
     }
     STATE.subtitleStores.set(url, { intervals, parsedAt: Date.now() });
+    STATE.lastSubtitleHandledAt = Date.now();
     const f = intervals[0], l = intervals[intervals.length - 1];
     log('subtitle parsed: ' + intervals.length + ' cues  '
         + 'first=' + f[0].toFixed(2) + 's last_end=' + l[1].toFixed(2) + 's  '
@@ -417,15 +424,36 @@
     const t = v.currentTime;
     const tCue = t - off;
     let inSpeech = false;
+    let usedDomFallback = false;
     if (STATE.currentIntervals.length) {
       const idx = findCueAt(tCue);
       inSpeech = (idx >= 0);
+    } else if (STATE.domObserverActive) {
+      // フォールバック: ネイティブ字幕DOMの観察結果を使う
+      inSpeech = STATE.domSubtitleInSpeech;
+      usedDomFallback = true;
     } else {
       inSpeech = true;
     }
 
     let target;
-    if (inSpeech) {
+    if (usedDomFallback) {
+      // DOMフォールバック時は cue 配列が無いので gap 長さを正確に測れない。
+      // video.currentTime ベースで「直近の音声終了からどれだけ経ったか」を計測し、
+      // silentMinGap 秒以上沈黙していれば silentRate に切り替える。
+      if (inSpeech) {
+        STATE.domSilenceStartedAtVideoTime = -1;
+        target = STATE.settings.speechRate;
+      } else {
+        if (STATE.domSilenceStartedAtVideoTime < 0) {
+          STATE.domSilenceStartedAtVideoTime = t;
+        }
+        const silenceDur = t - STATE.domSilenceStartedAtVideoTime;
+        target = (silenceDur >= STATE.settings.silentMinGap)
+          ? STATE.settings.silentRate
+          : STATE.settings.speechRate;
+      }
+    } else if (inSpeech) {
       target = STATE.settings.speechRate;
     } else if (inSilentGapLongEnough(tCue)) {
       target = STATE.settings.silentRate;
@@ -434,31 +462,54 @@
     }
     setRate(target);
 
-    if (STATE.settings.overlayEnabled && STATE.currentIntervals.length) {
-      const idx = STATE.currentIntervalIdx;
-      const cue = (idx >= 0 && STATE.currentIntervals[idx]) || null;
-      if (cue && cue[0] <= tCue && tCue < cue[1]) showOverlay(cue[2]);
-      else hideOverlay();
+    if (STATE.settings.overlayEnabled) {
+      if (STATE.currentIntervals.length) {
+        const idx = STATE.currentIntervalIdx;
+        const cue = (idx >= 0 && STATE.currentIntervals[idx]) || null;
+        if (cue && cue[0] <= tCue && tCue < cue[1]) showOverlay(cue[2]);
+        else hideOverlay();
+      } else if (usedDomFallback && STATE.domSubtitleText) {
+        // DOMフォールバック時は観察したテキストをそのまま中央表示
+        showOverlay(STATE.domSubtitleText);
+      } else {
+        hideOverlay();
+      }
     } else if (STATE.overlayEl) {
       hideOverlay();
     }
 
     if (STATE.hudEl) {
       const cueCount = STATE.currentIntervals.length;
-      const label = (cueCount === 0) ? '—' : (inSpeech ? i18n('hudSpeech', '発話') : i18n('hudSilent', '無音声'));
+      // ラベル: cue配列モード or DOMフォールバックモード or 未捕捉
+      let label;
+      if (cueCount > 0 || usedDomFallback) {
+        label = inSpeech ? i18n('hudSpeech', '音声') : i18n('hudSilent', '非音声');
+      } else {
+        label = '—';
+      }
       const ratio = computeCompressionRatio();
-      let tail;
+      // tail: 圧縮率（XHRモード時のみ計算可）/ 状態（DOMモードは省略 = 動作中で表示なし）
+      let tail = '';
       if (ratio != null) {
         const pct = Math.round((1 - ratio) * 100);
         tail = pct + i18n('hudCompressedSuffix', '% 圧縮');
-      } else if (STATE.interceptorReady) {
-        tail = i18n('hudNotCaptured', '字幕未取得');
-      } else {
-        tail = i18n('hudInit', 'init…');
+      } else if (!usedDomFallback) {
+        if (STATE.interceptorReady) {
+          tail = i18n('hudNotCaptured', '字幕未取得');
+        } else {
+          tail = i18n('hudInit', 'init…');
+        }
       }
-      STATE.hudEl.textContent = label + '  ' + target.toFixed(2) + '×  ' + tail;
+      const parts = [label, target.toFixed(2) + '×'];
+      if (tail) parts.push(tail);
+      STATE.hudEl.textContent = parts.join('  ');
+      // tooltip にモード説明を表示
+      const modeHint = usedDomFallback
+        ? '字幕情報をプレイヤー画面から直接観察中。動作は正常ですが、全体の圧縮率は表示できません。'
+        : (cueCount > 0 ? '字幕タイミング情報を取得し動作中。' : '字幕の取得を待機中。');
+      STATE.hudEl.title = modeHint + '\n' + i18n('hudClickHint', 'クリックでCinemaGazer設定を開く');
       let bg;
-      if (cueCount === 0) bg = 'rgba(120,120,120,.85)';
+      if (cueCount === 0 && !usedDomFallback) bg = 'rgba(120,120,120,.85)';
       else if (inSpeech)  bg = 'rgba(60,120,200,.85)';
       else                bg = 'rgba(200,60,60,.85)';
       STATE.hudEl.style.background = bg;
@@ -491,12 +542,71 @@
     STATE.rateGuardTimer = null;
   }
 
+  // DOM観察によるフォールバック字幕検出。
+  // Netflix/Prime が画面に描画している字幕テキストを MutationObserver で監視し、
+  // 「字幕が表示されている＝音声中」「消えている＝非音声中」として inSpeech を判定する。
+  // 利点: XHRフックが届かない場合（service worker経由配信、内部キャッシュ、URLパターン変更）でも動く。
+  // 欠点: 先読みできないため compression ratio は概算しか出せない。
+  const NATIVE_SUBTITLE_SELECTORS = [
+    '.player-timedtext',
+    '[data-uia="player-timedtext"]',
+    '.player-timedtext-text-container',
+    '.atvwebplayersdk-captions-overlay',
+    '.atvwebplayersdk-captions-text',
+    '[class*="captions-overlay"]',
+    '[class*="captionsOverlay"]'
+  ];
+  function readNativeSubtitleText() {
+    for (const sel of NATIVE_SUBTITLE_SELECTORS) {
+      const el = document.querySelector(sel);
+      if (el) {
+        const t = (el.textContent || '').trim();
+        if (t) return t;
+      }
+    }
+    return '';
+  }
+  function startSubtitleDOMObserver() {
+    if (STATE.domObserverActive) return;
+    STATE.domObserverActive = true;
+    const update = () => {
+      const text = readNativeSubtitleText();
+      if (text !== STATE.domSubtitleText) {
+        STATE.domSubtitleText = text;
+        STATE.domSubtitleInSpeech = !!text;
+      }
+    };
+    // プレイヤーコンテナを subtree 監視。childList/characterData ともに見て字幕の更新を逃さない。
+    const playerSel = '[data-uia="player"], .NFPlayer, .webPlayerSDKContainer, [id^="atvwebplayersdk"]';
+    const attachObserver = () => {
+      const player = document.querySelector(playerSel) || document.body;
+      const mo = new MutationObserver(update);
+      mo.observe(player, { childList: true, subtree: true, characterData: true });
+      log('DOM subtitle observer attached');
+    };
+    if (document.querySelector(playerSel)) {
+      attachObserver();
+    } else {
+      // player要素出現待ち
+      const wait = new MutationObserver(() => {
+        if (document.querySelector(playerSel)) {
+          wait.disconnect();
+          attachObserver();
+        }
+      });
+      wait.observe(document.documentElement, { childList: true, subtree: true });
+    }
+    // MutationObserverが characterData の取りこぼすケースに備え、200msの低頻度ポーリングも併用
+    setInterval(update, 200);
+  }
+
   function attachVideo(v) {
     if (!v || STATE.video === v) return;
     STATE.video = v;
     log('attached video', v);
     ensureHud();
     ensureOverlay();
+    startSubtitleDOMObserver();
     if (!STATE.rafId) STATE.rafId = requestAnimationFrame(tick);
     startRateGuard();
   }
@@ -519,16 +629,39 @@
     tryAttach();
     const mo = new MutationObserver(() => tryAttach());
     mo.observe(document.documentElement, { subtree: true, childList: true });
+    // SPA遷移（タイトル切替/次エピソード）監視。
+    //
+    // 重要: Netflix は次エピソードの字幕XHRを URL変化の **直前** に先打ちすることがある。
+    // そのため URL変化を検知した瞬間に無条件で currentIntervals をクリアすると、
+    // 直前に届いた新エピソードの字幕まで消してしまう。
+    // → URL変化の直近2秒以内に handleSubtitle が呼ばれていれば（=新字幕受信済み）、クリアしない。
     let lastUrl = location.href;
+    let lastUrlChangeAt = 0;
     setInterval(() => {
       if (location.href !== lastUrl) {
         lastUrl = location.href;
+        lastUrlChangeAt = Date.now();
         log('url change', lastUrl);
-        STATE.subtitleStores.clear();
-        STATE.currentIntervals = [];
-        STATE.currentIntervalIdx = -1;
-        STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+        const recent = STATE.lastSubtitleHandledAt && (Date.now() - STATE.lastSubtitleHandledAt < 2000);
+        if (recent) {
+          log('  → 直前2秒以内に字幕受信済み。currentIntervals は維持して新エピソードに引き継ぎ');
+          // currentIntervalIdx と圧縮率キャッシュは念のためリセット（時刻が0に戻るため）
+          STATE.currentIntervalIdx = -1;
+          STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+        } else {
+          log('  → 直近字幕無し。currentIntervals をクリア（新字幕XHRの到着を待つ／force-refreshに期待）');
+          STATE.currentIntervals = [];
+          STATE.currentIntervalIdx = -1;
+          STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+        }
         tryAttach();
+      }
+      // URL変化後3秒以内に字幕が来ていなければ警告ログ（デバッグ用）
+      if (lastUrlChangeAt && Date.now() - lastUrlChangeAt > 3000 && STATE.currentIntervals.length === 0) {
+        if (STATE.video && STATE.video.readyState >= 2 && STATE.video.currentTime > 1) {
+          warn('URL変化後3秒経っても字幕が捕捉できていません。Netflix側で字幕がOFFのまま、または字幕XHRのURLパターンに変更があった可能性。');
+          lastUrlChangeAt = 0; // 一度警告したら抑止
+        }
       }
     }, 500);
   }
@@ -625,6 +758,9 @@
         firstCue: cur[0],
         lastCue: cur[cur.length - 1],
         compressionRatio: computeCompressionRatio(),
+        domObserverActive: STATE.domObserverActive,
+        domSubtitleInSpeech: STATE.domSubtitleInSpeech,
+        domSubtitleText: STATE.domSubtitleText,
         stores,
         settings: STATE.settings
       };
