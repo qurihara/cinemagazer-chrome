@@ -2,7 +2,11 @@
 
 > 字幕情報から発話区間を抽出し、発話/無音で再生速度を動的に切り替える Netflix / Prime Video 用の Chrome 拡張
 
-WISS2011論文
+**🇬🇧 English version of this README is available below — please scroll down to the [English](#english) section.**
+
+---
+
+WISS2011 ベストペーパー
 [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864)
 （栗原一貴, 2011）のコア手法を、現代のWebブラウザ環境（Netflix / Amazon Prime Video）で再現する Chrome 拡張です。
 
@@ -16,6 +20,17 @@ CinemaGazer は、
 - **字幕がない区間 = 無音扱い** → "飛ばせる速さ"（既定 4.0×）
 
 を `video.playbackRate` で動的に切替えます。元論文のtwo-level fast-forwardingをそのまま現代のストリーミングサービスに適用した形です。
+
+## デモビデオ（元システム）
+
+元論文の発表当時に公開されたデモ動画です。コンセプト・効果のイメージはこれらが最も分かりやすいです。
+
+| | |
+|---|---|
+| [![CinemaGazer 日本語PV](https://img.youtube.com/vi/-_UZqVE-N8I/0.jpg)](https://www.youtube.com/watch?v=-_UZqVE-N8I) | [![CinemaGazer 活用例（日本語字幕）](https://img.youtube.com/vi/2NZ2ObN0CJc/0.jpg)](https://www.youtube.com/watch?v=2NZ2ObN0CJc) |
+| **CinemaGazer 日本語PV** — システム紹介 | **CinemaGazer 活用例（日本語字幕）** — 実例 |
+| [![CinemaGazer English PV](https://img.youtube.com/vi/3cjL78HFm1I/0.jpg)](https://www.youtube.com/watch?v=3cjL78HFm1I) | [![CinemaGazer Use Case (English Subtitles)](https://img.youtube.com/vi/A95q9DytflA/0.jpg)](https://www.youtube.com/watch?v=A95q9DytflA) |
+| **CinemaGazer 英語PV** — System overview | **CinemaGazer 活用例（英語字幕）** — Use case |
 
 ## 主な機能
 
@@ -166,7 +181,9 @@ python3 -c "import json; json.load(open('manifest.json'))"
 
 ## クレジット
 
-- 元論文: 栗原一貴 (2011). "CinemaGazer: a System for Watching Videos at Very High Speed". WISS 2011 ベストペーパー賞. [arXiv:1110.0864](https://arxiv.org/abs/1110.0864)
+- 元論文:
+  - 栗原一貴 (2011). "CinemaGazer: a System for Watching Videos at Very High Speed". WISS 2011（ベストペーパー賞）. [arXiv:1110.0864](https://arxiv.org/abs/1110.0864)
+  - Kazutaka Kurihara (2012). "CinemaGazer: A System for Watching Videos at Very High Speed," Proceedings of the 11th International Working Conference on Advanced Visual Interfaces (AVI'12), pp.108–115.
 - Chrome拡張版: 栗原一貴（津田塾大学）
 
 ## ライセンス
@@ -176,3 +193,160 @@ MIT License。詳細は [LICENSE](./LICENSE) を参照。
 ## 連絡先
 
 栗原一貴（津田塾大学）— kurihara@tsuda.ac.jp
+
+---
+
+<a id="english"></a>
+
+# English
+
+> A Chrome extension that dynamically switches video playback rate based on subtitle (speech) vs. non-subtitle (silent) intervals, for Netflix and Amazon Prime Video.
+
+This Chrome extension reproduces the core idea of the WISS 2011 best-paper / AVI 2012 paper [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) by Kazutaka Kurihara (Tsuda University), in the context of modern streaming services.
+
+## Why "extreme fast-forwarding" works
+
+Long videos contain many segments with **no speech and no subtitles** — establishing shots, silent staging, effect-only scenes. These can be played at 8–16× without much information loss. But uniformly fast-forwarding through speech segments makes the dialogue unintelligible.
+
+CinemaGazer applies different playback rates depending on whether subtitles are present at the current time:
+
+- **Subtitle present (= speech)** → an *intelligible* fast rate (default 1.5×)
+- **No subtitle (= silent)** → a *skip-through* rate (default 4.0×)
+
+This is a direct port of the original paper's two-level fast-forwarding to streaming services in 2026.
+
+## Demo videos (original system)
+
+These demo videos were released by the original paper to illustrate the concept and the experience.
+
+| | |
+|---|---|
+| [![CinemaGazer English PV](https://img.youtube.com/vi/3cjL78HFm1I/0.jpg)](https://www.youtube.com/watch?v=3cjL78HFm1I) | [![CinemaGazer Use Case (English Subtitles)](https://img.youtube.com/vi/A95q9DytflA/0.jpg)](https://www.youtube.com/watch?v=A95q9DytflA) |
+| **CinemaGazer (English) PV** — System overview | **CinemaGazer use case (English subtitles)** |
+| [![CinemaGazer 日本語PV](https://img.youtube.com/vi/-_UZqVE-N8I/0.jpg)](https://www.youtube.com/watch?v=-_UZqVE-N8I) | [![CinemaGazer 活用例（日本語字幕）](https://img.youtube.com/vi/2NZ2ObN0CJc/0.jpg)](https://www.youtube.com/watch?v=2NZ2ObN0CJc) |
+| **CinemaGazer (Japanese) PV** | **CinemaGazer use case (Japanese subtitles)** |
+
+## Features
+
+- Automatic playback rate switching between speech / silent intervals
+- HUD in the top-right corner showing current state (speech / silent), current rate, and total compression ratio. Click the HUD to open settings popup.
+- Center subtitle overlay ("centering") with fade — native player subtitles are hidden so only the centered overlay shows.
+- Auto-enable subtitles on Netflix (via the player's internal `setTimedTextTrack` API).
+- Per-site enable/disable (default: Netflix = ON, Prime = OFF).
+- Subtitle timing offset adjustment (±5s).
+- Settings synced via `chrome.storage.sync`.
+
+## Supported sites
+
+| Site | Status | Notes |
+|---|---|---|
+| Netflix (`netflix.com`) | ✅ Stable | Subtitles are auto-enabled by the extension. |
+| Amazon Prime Video (`primevideo.com`, `amazon.co.jp/gp/video/...`, `amazon.com/...`) | ⚠️ Experimental | Subtitle timing can drift on some titles. Default off; toggle in popup. |
+
+If subtitles are off on a given title, rate switching is bypassed and playback stays at `speechRate` as a safe fallback.
+
+## Install (developer mode)
+
+1. Clone this repository or download a release ZIP and unzip it.
+2. Open `chrome://extensions/` in Chrome.
+3. Enable **Developer mode** (top-right toggle).
+4. Click **"Load unpacked"** and select the project folder.
+5. Open Netflix and start playback — a HUD should appear in the top-right corner.
+
+## Usage
+
+1. Start playing a video on Netflix or Prime Video.
+2. Netflix subtitles are auto-enabled. For Prime, enable subtitles manually and tick "Prime Video で有効化" (enable for Prime Video) in the popup.
+3. The HUD shows current rate and overall compression ratio.
+4. Click the HUD or the toolbar icon to open settings.
+
+### Settings
+
+| Setting | Description | Default |
+|---|---|---|
+| Master ON/OFF | Master switch for the extension | ON |
+| Speech rate | Playback rate during subtitle intervals | 1.5× |
+| Silent rate | Playback rate during non-subtitle intervals | 4.0× |
+| Min silent gap | Skip-rate is only applied to silent gaps longer than this | 0.4s |
+| Subtitle offset | Timing nudge for subtitles vs. video (±5s) | 0.0s |
+| Subtitle overlay | Render subtitles in the center; hide native subtitles | OFF |
+| Show HUD | Top-right HUD visibility | ON |
+| Enable on Netflix | Per-site gate | ON |
+| Enable on Prime Video | Per-site gate (experimental) | OFF |
+
+## Architecture
+
+```
+Chrome browser
+├── content_scripts (declared in manifest)
+│   ├── inject/interceptor.js  ── world: "MAIN"
+│   │   └─ Hooks fetch / XMLHttpRequest to capture subtitle (TTML/VTT) bodies.
+│   │      For Netflix, also calls setTimedTextTrack to auto-enable subtitles.
+│   │
+│   └── content/core.js         ── isolated world
+│       ├─ Adapter (netflix.js / prime.js) finds the right <video> element.
+│       ├─ Receives subtitles from interceptor via window.postMessage; parses.
+│       ├─ rAF loop reads currentTime and picks speechRate / silentRate.
+│       │  ── A 500ms guard re-applies the desired rate if the player resets it.
+│       ├─ HUD: current state / rate / compression ratio.
+│       └─ Overlay: fade-in/out subtitle rendered at the center of the video.
+│
+├── background.js (service worker)
+│   └─ Forwards "open popup" requests via chrome.action.openPopup().
+│
+└── popup/ (popup.html / popup.js / popup.css)
+    └─ Settings UI; persisted in chrome.storage.sync.
+```
+
+### Subtitle formats
+
+- **TTML / DFXP** (Netflix, Prime Video): resolves time units from `ttp:tickRate` / `ttp:frameRate`; recursively accumulates `<div begin="...">` offsets.
+- **WebVTT**
+
+## Privacy
+
+The extension collects **no personal data**. Subtitle timing data is parsed locally in your browser and never sent to any server. Only the user's settings are stored in `chrome.storage.sync` (synced across the user's own Google account devices). See [PRIVACY.md](./PRIVACY.md) for details.
+
+## Troubleshooting
+
+**HUD is not visible.** Check the per-site toggle (e.g. "Netflix で有効化") in the popup. Check `chrome://extensions` for errors.
+
+**HUD shows "字幕未取得" (subtitles not captured).** The extension only sees subtitles after playback starts (the player fetches them lazily). Reload the page and start playback. In DevTools console:
+
+```js
+CinemaGazer.info()    // content-script-side state
+__cgDump()             // URLs observed by the page-world interceptor
+```
+
+**Subtitles drift from video (especially on Prime).** Use the "字幕タイミング微調整" (subtitle timing offset) slider in the popup, or disable Prime in settings.
+
+## Development
+
+Vanilla JavaScript, no build step.
+
+```bash
+# Package
+zip -r cinemagazer-0.1.0.zip \
+  manifest.json background.js \
+  inject/ content/ popup/ icons/ \
+  -x '*.tmp' -x '.DS_Store'
+
+# Syntax check
+node --check background.js inject/interceptor.js content/core.js content/netflix.js content/prime.js popup/popup.js
+python3 -c "import json; json.load(open('manifest.json'))"
+```
+
+## Credits
+
+- Original papers:
+  - 栗原一貴 (2011). "CinemaGazer: a System for Watching Videos at Very High Speed", WISS 2011 (Best Paper Award). [arXiv:1110.0864](https://arxiv.org/abs/1110.0864)
+  - Kazutaka Kurihara (2012). "CinemaGazer: A System for Watching Videos at Very High Speed," *Proceedings of the 11th International Working Conference on Advanced Visual Interfaces (AVI'12)*, pp.108–115.
+- Chrome extension implementation: Kazutaka Kurihara (Tsuda University).
+
+## License
+
+MIT License. See [LICENSE](./LICENSE).
+
+## Contact
+
+Kazutaka Kurihara (Tsuda University) — kurihara@tsuda.ac.jp
