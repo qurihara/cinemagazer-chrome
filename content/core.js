@@ -37,7 +37,8 @@
   const warn = (...a) => console.warn('[CinemaGazer]', ...a);
 
   // i18n: chrome.i18n.getMessage のラッパー（取得できなければフォールバック文字列を返す）
-  function t(key, fallback) {
+  // 関数名は tick() 内の `const t = v.currentTime` と衝突するため 'i18n' とする
+  function i18n(key, fallback) {
     try {
       if (chrome && chrome.i18n && typeof chrome.i18n.getMessage === 'function') {
         const m = chrome.i18n.getMessage(key);
@@ -444,16 +445,16 @@
 
     if (STATE.hudEl) {
       const cueCount = STATE.currentIntervals.length;
-      const label = (cueCount === 0) ? '—' : (inSpeech ? t('hudSpeech', '発話') : t('hudSilent', '無音'));
+      const label = (cueCount === 0) ? '—' : (inSpeech ? i18n('hudSpeech', '発話') : i18n('hudSilent', '無音'));
       const ratio = computeCompressionRatio();
       let tail;
       if (ratio != null) {
         const pct = Math.round((1 - ratio) * 100);
-        tail = pct + t('hudCompressedSuffix', '% 圧縮');
+        tail = pct + i18n('hudCompressedSuffix', '% 圧縮');
       } else if (STATE.interceptorReady) {
-        tail = t('hudNotCaptured', '字幕未取得');
+        tail = i18n('hudNotCaptured', '字幕未取得');
       } else {
-        tail = t('hudInit', 'init…');
+        tail = i18n('hudInit', 'init…');
       }
       STATE.hudEl.textContent = label + '  ' + target.toFixed(2) + '×  ' + tail;
       let bg;
@@ -538,7 +539,7 @@
     const el = document.createElement('div');
     el.id = 'cg-hud';
     el.className = 'cg-hud';
-    el.title = t('hudClickHint', 'クリックでCinemaGazer設定を開く');
+    el.title = i18n('hudClickHint', 'クリックでCinemaGazer設定を開く');
     el.addEventListener('click', (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -639,7 +640,6 @@
     applySettingsImmediate();
     injectInterceptor();
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', watchForVideo, { once: true });
       document.addEventListener('DOMContentLoaded', watchForVideo, { once: true });
     } else {
       watchForVideo();
