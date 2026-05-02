@@ -59,7 +59,7 @@
     "message": "残り {time}"
   },
   "buttonShareUrl": {
-    "message": "🔗 設定込みのシェアURLをコピー"
+    "message": "🔗 同じ速度設定で再生するURLリンクをコピー"
   },
   "buttonShareUrlCopied": {
     "message": "✓ クリップボードにコピーしました"

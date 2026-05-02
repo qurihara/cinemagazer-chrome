@@ -59,7 +59,7 @@
     "message": "{time} left"
   },
   "buttonShareUrl": {
-    "message": "🔗 Copy share URL"
+    "message": "🔗 Copy link to play with the same settings"
   },
   "buttonShareUrlCopied": {
     "message": "✓ Copied to clipboard"

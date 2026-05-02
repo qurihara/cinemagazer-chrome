@@ -51,6 +51,7 @@ CinemaGazer は、
 - **Netflix では字幕を自動でON**（プレイヤー内部APIで `setTimedTextTrack`）
 - **サイト別ON/OFF**（既定: Netflix=ON, Prime=OFF）
 - **字幕タイミング微調整**（±5秒）
+- **同じ速度設定で再生するURLリンクをコピー** — popup の青いボタンで、現在の動画URL＋自分の速度設定をまとめた共有用URLをクリップボードにコピー。受け取った人がCinemaGazer導入済みなら、その人も同じ速度設定で再生開始できる
 - 設定値は `chrome.storage.sync` でGoogleアカウント間同期
 
 ## 動作環境
@@ -128,6 +129,35 @@ Chrome ブラウザ
   - `<div begin="...">` の累積オフセットを再帰的に処理
 - **WebVTT**
 
+## URLパラメータで設定を共有
+
+popup下の **「🔗 同じ速度設定で再生するURLリンクをコピー」** ボタンを押すと、現在の動画URL＋速度設定を含むURLがクリップボードにコピーされます。
+
+```
+https://www.netflix.com/watch/82047157?ss=1.5&ns=4&ov=1
+```
+
+このURLをCinemaGazer導入済みの人に送ると、相手は **同じ速度設定** で動画を再生開始できます。例えば「このアニメは 音声2.0× / 非音声6.0× で見るのおすすめ」みたいな共有が可能。
+
+| パラメータ | 設定 | 値 |
+|---|---|---|
+| `ss` | 音声区間の速度 | 0.5〜8.0 |
+| `ns` | 非音声区間の速度 | 0.5〜16.0 |
+| `mg` | 高速化する最小非音声(秒) | 0〜2 |
+| `to` | 字幕タイミング微調整(秒) | -5〜5 |
+| `ov` | 字幕オーバーレイ（中央表示） | 1/0 |
+| `hud` | 速度表示 | 1/0 |
+| `cg` | 拡張全体ON/OFF | 1/0 |
+
+URLパラメータでの設定上書きは **そのタブ限り**（保存設定は変更されません）。リンクから動画を見終わって普通の動画ページに戻れば、自分の保存設定が再び有効になります。
+
+DevToolsから直接URLを生成することもできます：
+
+```js
+CinemaGazer.makeShareUrl()
+CinemaGazer.makeShareUrl({ speechRate: 2.0, silentRate: 8.0 })   // 一時的な上書き
+```
+
 ## ディレクトリ構成
 
 ```
@@ -180,7 +210,7 @@ CinemaGazer/
 
 ```bash
 # パッケージ化
-zip -r cinemagazer-0.2.6.zip \
+zip -r cinemagazer-0.2.7.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
@@ -259,6 +289,7 @@ These demo videos were released by the original paper to illustrate the concept 
 - Auto-enable subtitles on Netflix (via the player's internal `setTimedTextTrack` API).
 - Per-site enable/disable (default: Netflix = ON, Prime = OFF).
 - Subtitle timing offset adjustment (±5s).
+- **Copy a shareable link with your current speed settings** — the blue button in the popup copies the current video URL plus your speed settings to the clipboard. If the recipient also has CinemaGazer installed, they can start playback at the same speed settings as you.
 - Settings synced via `chrome.storage.sync`.
 
 ## Supported sites
@@ -327,6 +358,35 @@ Chrome browser
 
 - **TTML / DFXP** (Netflix, Prime Video): resolves time units from `ttp:tickRate` / `ttp:frameRate`; recursively accumulates `<div begin="...">` offsets.
 - **WebVTT**
+
+## Sharing settings via URL
+
+Click the **"🔗 Copy link to play with the same settings"** button in the popup to copy the current video URL together with your speed settings to the clipboard:
+
+```
+https://www.netflix.com/watch/82047157?ss=1.5&ns=4&ov=1
+```
+
+If you send this URL to someone with CinemaGazer installed, they will start playback **with the same speed settings** as you. Useful for sharing recommendations like "watch this anime at speech 2.0× / non-speech 6.0×".
+
+| Param | Setting | Range |
+|---|---|---|
+| `ss` | speech rate | 0.5–8.0 |
+| `ns` | non-speech rate | 0.5–16.0 |
+| `mg` | min non-speech gap (sec) | 0–2 |
+| `to` | subtitle timing offset (sec) | -5 to 5 |
+| `ov` | subtitle overlay (centered) | 1/0 |
+| `hud` | show indicator | 1/0 |
+| `cg` | master enable | 1/0 |
+
+URL parameter overrides are **session-only** (your stored settings are not modified). Once you leave the URL with parameters, your saved settings take effect again.
+
+You can also generate a URL directly from DevTools:
+
+```js
+CinemaGazer.makeShareUrl()
+CinemaGazer.makeShareUrl({ speechRate: 2.0, silentRate: 8.0 })   // temporary override
+```
 
 ## Privacy
 
