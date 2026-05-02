@@ -169,7 +169,7 @@ CinemaGazer/
 
 ```bash
 # パッケージ化
-zip -r cinemagazer-0.2.1.zip \
+zip -r cinemagazer-0.2.2.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
@@ -326,7 +326,7 @@ Vanilla JavaScript, no build step.
 
 ```bash
 # Package
-zip -r cinemagazer-0.2.1.zip \
+zip -r cinemagazer-0.2.2.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
