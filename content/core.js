@@ -69,6 +69,19 @@
     return h > 0 ? (h + ':' + pad(m) + ':' + pad(s)) : (m + ':' + pad(s));
   }
 
+  // HUDの幅を安定させるためのユーティリティ。U+2007 (FIGURE SPACE) は
+  // 等幅数字と同じ幅を持つので、CSS の font-variant-numeric: tabular-nums と
+  // 組み合わせると、桁数が変わっても表示幅がブレない。
+  const FIGSP = ' ';
+  function padLeftFig(s, w) {
+    s = String(s);
+    return s.length >= w ? s : FIGSP.repeat(w - s.length) + s;
+  }
+  function padRightFig(s, w) {
+    s = String(s);
+    return s.length >= w ? s : s + FIGSP.repeat(w - s.length);
+  }
+
   // 残り視聴時間を、現在の圧縮率で見続けた場合の見積もりとして算出。
   // XHRモード（全体の圧縮率が計算可能）でのみ意味のある値を返す。
   // DOMフォールバック時は cue 配列が無く、瞬間 playbackRate での外挿は精度が悪い（速度がピョコピョコ切り替わるため）ので null を返して非表示にする。
@@ -580,7 +593,8 @@
       let tail = '';
       if (ratio != null) {
         const pct = Math.round((1 - ratio) * 100);
-        tail = pct + i18n('hudCompressedSuffix', '% 圧縮');
+        // 圧縮率は0–99% (時に100%超もありうるが稀)。3桁分の幅で固定。
+        tail = padLeftFig(pct, 3) + i18n('hudCompressedSuffix', '% 圧縮');
       } else if (!usedDomFallback) {
         if (STATE.interceptorReady) {
           tail = i18n('hudNotCaptured', '字幕未取得');
@@ -594,9 +608,12 @@
       let remPart = '';
       if (remStr) {
         const tpl = i18n('hudRemainingFormat', '残り {time}');
-        remPart = tpl.replace('{time}', remStr);
+        // 「H:MM:SS」(7) を最大幅と仮定して左パディング
+        remPart = tpl.replace('{time}', padLeftFig(remStr, 7));
       }
-      const parts = [label, target.toFixed(2) + '×'];
+      // 速度: 0.50–16.00 までを5文字幅 (XX.XX) で固定
+      const rateStr = padLeftFig(target.toFixed(2), 5) + '×';
+      const parts = [label, rateStr];
       if (tail) parts.push(tail);
       if (remPart) parts.push(remPart);
       STATE.hudEl.textContent = parts.join('  ');
@@ -915,6 +932,33 @@
         lastCue: cur[cur.length - 1],
         compressionRatio: computeCompressionRatio(),
         remainingViewingSec: computeRemainingViewingTime(),
+        domObserverActive: STATE.domObserverActive,
+        domSubtitleInSpeech: STATE.domSubtitleInSpeech,
+        domSubtitleText: STATE.domSubtitleText,
+        pendingIntervalsCount: STATE.pendingIntervals ? STATE.pendingIntervals.length : 0,
+        urlOverrides: STATE.urlOverrides || null,
+        stores,
+        settings: STATE.settings
+      };
+      console.group('%c[CinemaGazer] info', 'color:#c33;font-weight:bold');
+      console.log(out);
+      console.groupEnd();
+      return out;
+    }
+  };
+
+  async function start() {
+    await loadSettings();
+    applySettingsImmediate();
+    injectInterceptor();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', watchForVideo, { once: true });
+    } else {
+      watchForVideo();
+    }
+  }
+})();
+gSec: computeRemainingViewingTime(),
         domObserverActive: STATE.domObserverActive,
         domSubtitleInSpeech: STATE.domSubtitleInSpeech,
         domSubtitleText: STATE.domSubtitleText,
