@@ -664,6 +664,10 @@
     if (STATE.rafId) cancelAnimationFrame(STATE.rafId);
     STATE.rafId = null;
     stopRateGuard();
+    // HUD と オーバーレイを隠す（対象外ページに遷移したケース等）
+    if (STATE.hudEl) STATE.hudEl.style.display = 'none';
+    if (STATE.overlayEl) STATE.overlayEl.style.display = 'none';
+    document.documentElement.classList.remove('cg-overlay-active');
   }
 
   function findVideoDefault() {
@@ -671,9 +675,14 @@
   }
   function watchForVideo() {
     const tryAttach = () => {
-      const v = (STATE.adapter && STATE.adapter.findVideo && STATE.adapter.findVideo()) || findVideoDefault();
+      // adapter があれば adapter.findVideo() を信頼する（fallback には頼らない）。
+      // これにより、Netflix の /browse など「対象外URL」で adapter が null を返したら
+      // ブラウザ画面の予告編 video には反応しない。
+      const v = (STATE.adapter && STATE.adapter.findVideo)
+        ? STATE.adapter.findVideo()
+        : findVideoDefault();
       if (v && v !== STATE.video) attachVideo(v);
-      else if (!v && STATE.video && !document.contains(STATE.video)) detachVideo();
+      else if (!v && STATE.video) detachVideo();
     };
     tryAttach();
     const mo = new MutationObserver(() => tryAttach());
