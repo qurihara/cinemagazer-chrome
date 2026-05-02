@@ -4,9 +4,20 @@
 
 **🇬🇧 English version of this README is available below — please scroll down to the [English](#english) section.**
 
+### 手短に説明！
+- NetflixやAmazon Prime Videoを非常識なほど高速に動画鑑賞できる！たとえば30分もののアニメを10分以下で観るのも全然余裕！忙しい現代人に捧げます👍️
+- 人間、物語を理解するときには　(1)セリフが理解できること　(2)物語の全てをちゃんと脳内に通過させること　が大切だと思うんだよね。だからAIに重要なシーンだけカットしてもらって要約する、なんてことはしない！セリフ（つまり字幕）があるところはそのセリフが理解できる速さで再生する。そしてセリフがないところは、ものすごい速さで再生する。それを自動的にやるのがこのCinemaGazer。
+- セリフを耳で聞きたいなら2.0倍くらいが限界かな。でも字幕を目で見て理解するのでよければ、もっと3~5倍とかでも大丈夫かもね。
+- もともとある字幕情報を用いるから、鑑賞前にデータ処理する必要もない。軽量で待ち時間なし。サクサク使えるよ！
+- このくらいの極限的高速再生だと、字幕を読むために視線を動かすのはNG!画面中央に字幕を表示するから、ずっとぼーっと画面中央を眺めていればOK！
+- ときどき字幕と映像がずれたり、へんな字幕が出たりするけど、そのときはブラウザを再読み込みしてね！
+- 異常に高速再生するから、十分速いインターネット回線で使ってね！
+- 目まぐるしく情報が流れ込んでくるから、激しい点滅や目の疲れに注意してね！自己責任で使ってね！
+- この下はAIが作った説明だから、全部読まなくていいよ！とりあえず使いたい人は「インストール」と「使い方」のところだけ読んでね。
+
 ---
 
-WISS2011 論文
+ヒューマンコンピュータインタラクション分野の学会 WISS 2011  で発表された論文
 [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864)
 （栗原一貴, 2011）の提案手法を、現代のWebブラウザ環境（Netflix / Amazon Prime Video）で再現する Chrome 拡張です。
 
@@ -169,7 +180,7 @@ CinemaGazer/
 
 ```bash
 # パッケージ化
-zip -r cinemagazer-0.2.3.zip \
+zip -r cinemagazer-0.2.2.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
@@ -326,7 +337,7 @@ Vanilla JavaScript, no build step.
 
 ```bash
 # Package
-zip -r cinemagazer-0.2.3.zip \
+zip -r cinemagazer-0.2.2.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
