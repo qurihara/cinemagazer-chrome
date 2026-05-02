@@ -200,7 +200,7 @@ MIT License。詳細は [LICENSE](./LICENSE) を参照。
 
 # English
 
-> A Chrome extension for Netflix / Amazon Prime Video that enables **extremely fast video viewing** by dynamically switching playback rate between speech and non-speech intervals using subtitle timing.
+> A Chrome extension for Netflix / Amazon Prime Video that enables **extremely fast video viewing** by dynamically switching playback rate between speech and non-speech intervals using subtitle timing. No preprocessing required, lightweight — install and start watching right away.
 
 This Chrome extension reproduces the method proposed in the WISS 2011 / AVI 2012 papers [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) by Kazutaka Kurihara (Tsuda University), in the context of modern streaming services (Netflix / Amazon Prime Video).
 
