@@ -180,7 +180,7 @@ CinemaGazer/
 
 ```bash
 # パッケージ化
-zip -r cinemagazer-0.2.4.zip \
+zip -r cinemagazer-0.2.6.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'

@@ -110,11 +110,52 @@
     return ratio;
   }
 
+  // URLクエリ/ハッシュから「シェア用パラメータ」を読んで設定をオーバーライド。
+  // 例: https://www.netflix.com/watch/82047157?ss=1.4&ns=3.0&ov=1
+  // 保存設定（chrome.storage）は変更せず、当該ページ上のメモリのみ書き換える。
+  const URL_PARAM_MAP = {
+    ss: { key: 'speechRate',     type: 'float', lo: 0.5, hi: 8.0 },
+    ns: { key: 'silentRate',     type: 'float', lo: 0.5, hi: 16.0 },
+    mg: { key: 'silentMinGap',   type: 'float', lo: 0,   hi: 2.0 },
+    to: { key: 'subtitleOffset', type: 'float', lo: -5,  hi: 5 },
+    ov: { key: 'overlayEnabled', type: 'bool' },
+    hud:{ key: 'showHud',        type: 'bool' },
+    cg: { key: 'enabled',        type: 'bool' }
+  };
+  function parseUrlOverrides() {
+    const overrides = {};
+    let sp, hp;
+    try { sp = new URLSearchParams(location.search); } catch (e) { sp = new URLSearchParams(); }
+    try { hp = new URLSearchParams((location.hash || '').replace(/^#/, '')); } catch (e) { hp = new URLSearchParams(); }
+    for (const [pname, spec] of Object.entries(URL_PARAM_MAP)) {
+      let raw = sp.get(pname);
+      if (raw == null) raw = hp.get(pname);
+      if (raw == null) continue;
+      if (spec.type === 'float') {
+        const n = parseFloat(raw);
+        if (!Number.isFinite(n)) continue;
+        overrides[spec.key] = Math.min(spec.hi, Math.max(spec.lo, n));
+      } else if (spec.type === 'bool') {
+        overrides[spec.key] = /^(1|true|on|yes)$/i.test(raw);
+      }
+    }
+    return overrides;
+  }
+
   async function loadSettings() {
     try {
       const s = await chrome.storage.sync.get(null);
       Object.assign(STATE.settings, s);
     } catch (e) { warn('settings load failed', e); }
+    // URL overrides をメモリ上で適用（保存はしない）
+    const ov = parseUrlOverrides();
+    if (Object.keys(ov).length) {
+      Object.assign(STATE.settings, ov);
+      STATE.urlOverrides = ov;
+      log('URL overrides applied (session-only):', ov);
+    } else {
+      STATE.urlOverrides = null;
+    }
   }
   chrome.storage?.onChanged?.addListener((changes, area) => {
     if (area !== 'sync') return;
@@ -124,10 +165,17 @@
     }
     applySettingsImmediate();
   });
-  chrome.runtime?.onMessage?.addListener((msg) => {
+  chrome.runtime?.onMessage?.addListener((msg, sender, sendResponse) => {
     if (msg && msg.type === 'CG_SETTINGS_UPDATED' && msg.settings) {
       Object.assign(STATE.settings, msg.settings);
       applySettingsImmediate();
+    } else if (msg && msg.type === 'CG_GET_SHARE_URL') {
+      try {
+        sendResponse({ url: makeShareUrl() });
+      } catch (e) {
+        sendResponse({ url: null, error: String(e) });
+      }
+      return true; // sync response, but explicit return true to keep channel open
     }
   });
   function applySettingsImmediate() {
@@ -700,6 +748,21 @@
         lastUrl = location.href;
         lastUrlChangeAt = Date.now();
         log('url change', lastUrl);
+        // URL overrides を新URLに対して再適用（無ければ保存設定に戻す）
+        try {
+          chrome.storage.sync.get(null).then(s => {
+            Object.assign(STATE.settings, s);
+            const ov = parseUrlOverrides();
+            if (Object.keys(ov).length) {
+              Object.assign(STATE.settings, ov);
+              STATE.urlOverrides = ov;
+              log('URL overrides re-applied after URL change:', ov);
+            } else {
+              STATE.urlOverrides = null;
+            }
+            applySettingsImmediate();
+          });
+        } catch (e) {}
         if (STATE.pendingIntervals) {
           // プリロード済みの次エピソード字幕を昇格
           log('  → swap pending → current (' + STATE.pendingIntervals.length + ' cues)');
@@ -804,12 +867,33 @@
   document.addEventListener('fullscreenchange', () => { ensureOverlay(); ensureHud(); });
   document.addEventListener('webkitfullscreenchange', () => { ensureOverlay(); ensureHud(); });
 
+  // 現在の設定を URL クエリにエンコードしたシェア用URLを生成。
+  function makeShareUrl(opts) {
+    const s = Object.assign({}, STATE.settings, opts || {});
+    const url = new URL(location.href);
+    const stripPrefixes = ['trackId', 'tctx', 'ref_', 'ref', 'pf_rd_', 'sr_', 'tag', '_encoding', 'jr_', 'qid', 'sprefix'];
+    const sp = url.searchParams;
+    for (const k of Array.from(sp.keys())) {
+      if (stripPrefixes.some(p => k === p || k.startsWith(p))) sp.delete(k);
+    }
+    sp.set('ss', s.speechRate);
+    sp.set('ns', s.silentRate);
+    if (s.silentMinGap !== 0.4) sp.set('mg', s.silentMinGap);
+    if (s.subtitleOffset !== 0) sp.set('to', s.subtitleOffset);
+    if (s.overlayEnabled) sp.set('ov', '1');
+    if (s.showHud === false) sp.set('hud', '0');
+    if (s.enabled === false) sp.set('cg', '0');
+    url.hash = '';
+    return url.toString();
+  }
+
   window.CinemaGazer = {
     registerAdapter(adapter) {
       STATE.adapter = adapter;
       log('adapter registered:', adapter.name);
       start();
     },
+    makeShareUrl: makeShareUrl,
     info() {
       const cur = STATE.currentIntervals;
       const stores = [...STATE.subtitleStores.entries()].map(([url, v]) => ({
@@ -835,6 +919,7 @@
         domSubtitleInSpeech: STATE.domSubtitleInSpeech,
         domSubtitleText: STATE.domSubtitleText,
         pendingIntervalsCount: STATE.pendingIntervals ? STATE.pendingIntervals.length : 0,
+        urlOverrides: STATE.urlOverrides || null,
         stores,
         settings: STATE.settings
       };

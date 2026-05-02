@@ -57,5 +57,14 @@
   },
   "hudRemainingFormat": {
     "message": "{time} left"
+  },
+  "buttonShareUrl": {
+    "message": "🔗 Copy share URL"
+  },
+  "buttonShareUrlCopied": {
+    "message": "✓ Copied to clipboard"
+  },
+  "buttonShareUrlError": {
+    "message": "✗ Failed to copy (open a video page first)"
   }
 }

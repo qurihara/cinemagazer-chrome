@@ -57,5 +57,14 @@
   },
   "hudRemainingFormat": {
     "message": "残り {time}"
+  },
+  "buttonShareUrl": {
+    "message": "🔗 設定込みのシェアURLをコピー"
+  },
+  "buttonShareUrlCopied": {
+    "message": "✓ クリップボードにコピーしました"
+  },
+  "buttonShareUrlError": {
+    "message": "✗ コピーできません（動画再生ページで開いてください）"
   }
 }

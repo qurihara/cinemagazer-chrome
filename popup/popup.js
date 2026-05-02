@@ -55,6 +55,31 @@ async function save() {
   chrome.runtime.sendMessage({ type: 'CG_SETTINGS_UPDATED', settings }).catch(() => {});
 }
 
+// シェアURL コピー: アクティブタブの content script に問い合わせ → クリップボードへ
+async function copyShareUrl() {
+  const btn = $('copyShareUrl');
+  if (!btn) return;
+  const original = btn.textContent;
+  const restore = () => setTimeout(() => {
+    btn.textContent = original;
+    btn.classList.remove('ok', 'ng');
+  }, 2000);
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tabs[0] || !tabs[0].id) throw new Error('no active tab');
+    const resp = await chrome.tabs.sendMessage(tabs[0].id, { type: 'CG_GET_SHARE_URL' });
+    if (!resp || !resp.url) throw new Error('no url');
+    await navigator.clipboard.writeText(resp.url);
+    btn.textContent = chrome.i18n.getMessage('buttonShareUrlCopied') || '✓ クリップボードにコピーしました';
+    btn.classList.add('ok');
+    restore();
+  } catch (e) {
+    btn.textContent = chrome.i18n.getMessage('buttonShareUrlError') || '✗ コピーできません';
+    btn.classList.add('ng');
+    restore();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   applyI18n();
   load();
@@ -64,4 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('input', () => { refreshOutputs(); save(); });
     el.addEventListener('change', () => { refreshOutputs(); save(); });
   }
+  const shareBtn = $('copyShareUrl');
+  if (shareBtn) shareBtn.addEventListener('click', copyShareUrl);
 });

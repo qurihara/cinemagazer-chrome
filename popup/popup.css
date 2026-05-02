@@ -40,3 +40,21 @@ footer { padding: 8px 12px; font-size: 11px; color: #777; border-top: 1px solid 
 }
 .switch input:checked + span { background: #34c759; }
 .switch input:checked + span::before { transform: translateX(16px); }
+
+/* share button */
+.share-button {
+  width: 100%;
+  padding: 8px 10px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s, transform .08s;
+}
+.share-button:hover { background: #1565c0; }
+.share-button:active { transform: translateY(1px); }
+.share-button.ok { background: #34c759; }
+.share-button.ng { background: #d33; }
