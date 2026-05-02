@@ -169,7 +169,7 @@ CinemaGazer/
 
 ```bash
 # パッケージ化
-zip -r cinemagazer-0.2.0.zip \
+zip -r cinemagazer-0.2.1.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
@@ -326,12 +326,10 @@ Vanilla JavaScript, no build step.
 
 ```bash
 # Package
-zip -r cinemagazer-0.2.0.zip \
+zip -r cinemagazer-0.2.1.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
 
 # Syntax check
-node --check background.js inject/interceptor.js content/core.js content/netflix.js content/prime.js popup/popup.js
-python3 -c "import json; json.load(open('manifest.json'))"
-``
+node --

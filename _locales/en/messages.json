@@ -38,7 +38,7 @@
     "message": "Extracts speech intervals from Netflix / Prime Video subtitles and switches playback rate dynamically."
   },
   "hudSpeech": {
-    "message": "Speech"
+    "message": "   Speech"
   },
   "hudSilent": {
     "message": "Non-speech"

@@ -38,7 +38,7 @@
     "message": "Netflix / Prime Video の字幕情報から音声区間を抽出して動的に速度切替します"
   },
   "hudSpeech": {
-    "message": "音声"
+    "message": "　音声"
   },
   "hudSilent": {
     "message": "非音声"

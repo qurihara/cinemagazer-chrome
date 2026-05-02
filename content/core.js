@@ -521,7 +521,9 @@
       // ラベル: cue配列モード or DOMフォールバックモード or 未捕捉
       let label;
       if (cueCount > 0 || usedDomFallback) {
-        label = inSpeech ? i18n('hudSpeech', '音声') : i18n('hudSilent', '非音声');
+        // 「音声」と「非音声」で幅が異なってHUDがチラつくのを防ぐため、
+        // 「音声」の前に「非」と同じ全角スペース(U+3000) を1つ入れて幅を揃える
+        label = inSpeech ? i18n('hudSpeech', '　音声') : i18n('hudSilent', '非音声');
       } else {
         label = '—';
       }
@@ -716,9 +718,20 @@
     }, 500);
   }
 
+  function hudHost() {
+    // フルスクリーン中は fullscreenElement の子でないと描画されない
+    return document.fullscreenElement || document.webkitFullscreenElement || document.documentElement;
+  }
   function ensureHud() {
     if (!STATE.settings.showHud) return;
-    if (STATE.hudEl && document.contains(STATE.hudEl)) return;
+    const desiredHost = hudHost();
+    // 既に作成済みで、かつ正しい親にいるなら何もしない
+    if (STATE.hudEl && STATE.hudEl.parentNode === desiredHost) return;
+    if (STATE.hudEl) {
+      // 既存要素を新しいホストに再ペアレント
+      desiredHost.appendChild(STATE.hudEl);
+      return;
+    }
     const el = document.createElement('div');
     el.id = 'cg-hud';
     el.className = 'cg-hud';
@@ -730,7 +743,7 @@
         chrome.runtime.sendMessage({ type: 'CG_OPEN_POPUP' }).catch(() => {});
       } catch (e) {}
     });
-    document.documentElement.appendChild(el);
+    desiredHost.appendChild(el);
     STATE.hudEl = el;
   }
   function overlayHost() {
@@ -779,8 +792,8 @@
     STATE.overlayEl.style.opacity = '0';
     STATE.lastShownText = '';
   }
-  document.addEventListener('fullscreenchange', () => ensureOverlay());
-  document.addEventListener('webkitfullscreenchange', () => ensureOverlay());
+  document.addEventListener('fullscreenchange', () => { ensureOverlay(); ensureHud(); });
+  document.addEventListener('webkitfullscreenchange', () => { ensureOverlay(); ensureHud(); });
 
   window.CinemaGazer = {
     registerAdapter(adapter) {
