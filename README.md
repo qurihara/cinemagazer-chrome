@@ -1,6 +1,6 @@
 # CinemaGazer (Chrome拡張版)
 
-> 字幕情報から音声区間を抽出し、音声/非音声で再生速度を動的に切り替えることで極限的な高速動画鑑賞を可能にする Netflix / Prime Video 用の Chrome 拡張
+> 字幕情報から音声区間を抽出し、音声/非音声で再生速度を動的に切り替えることで極限的な高速動画鑑賞を可能にする Netflix / Prime Video 用の Chrome 拡張。事前データ処理不要で軽量。すぐ使えてすぐ鑑賞開始できます。
 
 **🇬🇧 English version of this README is available below — please scroll down to the [English](#english) section.**
 
