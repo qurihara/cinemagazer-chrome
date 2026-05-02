@@ -958,30 +958,3 @@
     }
   }
 })();
-gSec: computeRemainingViewingTime(),
-        domObserverActive: STATE.domObserverActive,
-        domSubtitleInSpeech: STATE.domSubtitleInSpeech,
-        domSubtitleText: STATE.domSubtitleText,
-        pendingIntervalsCount: STATE.pendingIntervals ? STATE.pendingIntervals.length : 0,
-        urlOverrides: STATE.urlOverrides || null,
-        stores,
-        settings: STATE.settings
-      };
-      console.group('%c[CinemaGazer] info', 'color:#c33;font-weight:bold');
-      console.log(out);
-      console.groupEnd();
-      return out;
-    }
-  };
-
-  async function start() {
-    await loadSettings();
-    applySettingsImmediate();
-    injectInterceptor();
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', watchForVideo, { once: true });
-    } else {
-      watchForVideo();
-    }
-  }
-})();
