@@ -180,7 +180,7 @@ CinemaGazer/
 
 ```bash
 # パッケージ化
-zip -r cinemagazer-0.2.2.zip \
+zip -r cinemagazer-0.2.4.zip \
   manifest.json background.js \
   inject/ content/ popup/ icons/ \
   -x '*.tmp' -x '.DS_Store'
@@ -213,7 +213,21 @@ MIT License。詳細は [LICENSE](./LICENSE) を参照。
 
 > A Chrome extension for Netflix / Amazon Prime Video that enables **extremely fast video viewing** by dynamically switching playback rate between speech and non-speech intervals using subtitle timing. No preprocessing required, lightweight — install and start watching right away.
 
-This Chrome extension reproduces the method proposed in the WISS 2011 / AVI 2012 papers [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) by Kazutaka Kurihara (Tsuda University), in the context of modern streaming services (Netflix / Amazon Prime Video).
+### Quick intro!
+
+- Watch Netflix and Amazon Prime Video at ridiculously high speeds! For example, you can easily finish a 30-minute anime episode in under 10 minutes. Dedicated to busy modern people 👍
+- I think the keys to understanding a story are: (1) being able to follow the dialogue, and (2) actually letting the entire story pass through your brain. So this tool does NOT use AI to "summarize the important scenes only" — instead, parts with dialogue (i.e. with subtitles) are played at a speed where you can still understand the speech, and parts without dialogue are played at an extremely high speed. CinemaGazer does this automatically.
+- If you want to *listen* to the dialogue, around 2.0× is the practical limit. But if you're fine with *reading* the subtitles, 3–5× should still work.
+- Because it uses the existing subtitle data, no preprocessing is needed before watching. Lightweight, no waiting time — snappy.
+- At these extreme speeds, moving your eyes down to read subtitles is too slow! CinemaGazer can show subtitles in the **center** of the screen so you can just stare at the middle and read.
+- Sometimes subtitles get out of sync, or odd subtitles slip through — when that happens, just reload the browser tab.
+- Because playback is unusually fast, please use a sufficiently fast Internet connection.
+- Information will fly at you. Please be mindful of rapid flashing and eye fatigue. Use at your own discretion.
+- The rest of this README is AI-generated, so you don't have to read it all. If you just want to use it, jump to **Install** and **Usage**.
+
+---
+
+This is a Chrome extension that reproduces the method proposed in the paper [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) by Kazutaka Kurihara (Tsuda University), originally presented at WISS 2011 (a Japanese academic conference on Human-Computer Interaction) and AVI 2012, in the context of modern streaming services (Netflix / Amazon Prime Video).
 
 ## Why "extreme fast-forwarding" works
 
@@ -320,27 +334,4 @@ The extension collects **no personal data**. Subtitle timing data is parsed loca
 
 ## Troubleshooting
 
-**Top-right speed indicator (HUD) is not visible.** Check the per-site toggle (e.g. "Netflix で有効化") in the popup. Check `chrome://extensions` for errors.
-
-**Indicator shows "字幕未取得" / "no subtitles" (subtitles not captured).** The extension only sees subtitles after playback starts (the player fetches them lazily). Reload the page and start playback. In DevTools console:
-
-```js
-CinemaGazer.info()    // content-script-side state
-__cgDump()             // URLs observed by the page-world interceptor
-```
-
-**Subtitles drift from video (especially on Prime).** Use the "字幕タイミング微調整" (subtitle timing offset) slider in the popup, or disable Prime in settings.
-
-## Development
-
-Vanilla JavaScript, no build step.
-
-```bash
-# Package
-zip -r cinemagazer-0.2.2.zip \
-  manifest.json background.js \
-  inject/ content/ popup/ icons/ \
-  -x '*.tmp' -x '.DS_Store'
-
-# Syntax check
-node --
+**Top-ri
