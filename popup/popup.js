@@ -23,7 +23,7 @@ async function load() {
   $('silentRate').value = s.silentRate ?? 4.0;
   $('silentMinGap').value = s.silentMinGap ?? 0.4;
   $('subtitleOffset').value = s.subtitleOffset ?? 0.0;
-  $('overlayEnabled').checked = !!s.overlayEnabled;
+  $('overlayEnabled').checked = s.overlayEnabled !== false; // 既定 ON
   $('showHud').checked = s.showHud !== false;
   $('enableNetflix').checked = s.enableNetflix !== false; // 既定 ON
   $('enablePrime').checked = s.enablePrime === true;       // 既定 OFF

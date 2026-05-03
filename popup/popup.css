@@ -58,3 +58,14 @@ footer { padding: 8px 12px; font-size: 11px; color: #777; border-top: 1px solid 
 .share-button:active { transform: translateY(1px); }
 .share-button.ok { background: #34c759; }
 .share-button.ng { background: #d33; }
+
+/* credit line */
+.credit {
+  padding: 4px 12px 8px;
+  font-size: 10px;
+  color: #999;
+  background: #fafafa;
+  text-align: right;
+}
+.credit a { color: #1976d2; text-decoration: none; }
+.credit a:hover { text-decoration: underline; }

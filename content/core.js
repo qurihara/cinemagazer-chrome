@@ -8,7 +8,7 @@
       speechRate: 1.5,
       silentRate: 4.0,
       silentMinGap: 0.4,
-      overlayEnabled: false,
+      overlayEnabled: true,
       overlayFadeMs: 200,
       showHud: true,
       // 字幕の体感ズレを微調整 (秒, 正値=字幕を遅らせる, 負値=字幕を早める)
