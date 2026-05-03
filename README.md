@@ -66,17 +66,21 @@ CinemaGazer は、
 
 ## インストール
 
-### 開発者モード（推奨：開発・テスト用）
+### Chrome Web Store からインストール（推奨）
+
+👉 **[Chrome Web Store: CinemaGazer](https://chromewebstore.google.com/detail/cinemagazer/iogcniihehmjmclbhakekencmlplclii)**
+
+ストアページで「Chromeに追加」を押すだけ。インストール後、Netflix を開いて再生すれば画面右上にHUDが表示されて動作開始します。Chromeなら自動でアップデートされます。
+
+### 開発者モード（開発・テスト用）
+
+ソースから直接動かしたい人向け。
 
 1. このリポジトリをクローン or ZIP展開
 2. Chrome で `chrome://extensions/` を開く
 3. 右上の **デベロッパーモード** を ON
 4. **「パッケージ化されていない拡張機能を読み込む」** → このフォルダを選択
 5. Netflix を開いて再生 → 画面右上にHUDが出れば動作中
-
-### Chrome Web Store（公開後）
-
-予定: 後日Chrome Web Storeで公開（[STORE_SUBMISSION.md](./STORE_SUBMISSION.md) 参照）
 
 ## 使い方
 
@@ -302,7 +306,17 @@ These demo videos were released by the original paper to illustrate the concept 
 
 If subtitles are off on a given title, rate switching is disabled.
 
-## Install (developer mode)
+## Install
+
+### Chrome Web Store (recommended)
+
+👉 **[Chrome Web Store: CinemaGazer](https://chromewebstore.google.com/detail/cinemagazer/iogcniihehmjmclbhakekencmlplclii)**
+
+Just hit "Add to Chrome" on the store page. After installation, open Netflix and start playback — a HUD should appear in the top-right corner. Chrome will auto-update the extension as new versions are released.
+
+### Developer mode (for development / testing)
+
+For running the extension straight from source:
 
 1. Clone this repository or download a release ZIP and unzip it.
 2. Open `chrome://extensions/` in Chrome.
@@ -395,4 +409,117 @@ The extension collects **no personal data**. Subtitle timing data is parsed loca
 
 ## Troubleshooting
 
-**Top-ri
+**Top-right HUD doesn't appear**
+- Make sure the per-site toggle (e.g. "Enable on Netflix") is on in the popup.
+- Open `chrome://extensions/` and check for any errors on the CinemaGazer item.
+
+**Rate switching doesn't happen (HUD stuck on "no subtitles")**
+- Has playback actually started? Subtitle XHR fires when playback begins.
+- Reload the page, then start playback again.
+- In DevTools console:
+  ```js
+  CinemaGazer.info()    // content-script side state
+  __cgDump()             // URLs observed in the page world
+  ```
+
+**Subtitles drift out of sync (especially on Prime)**
+- Use the "Subtitle timing offset" slider in the popup.
+- If it still won't stabilize, turn Prime off in the popup.
+
+## Development
+
+Vanilla JavaScript, no build step.
+
+```bash
+# Package
+zip -r cinemagazer-0.2.10.zip \
+  manifest.json background.js \
+  inject/ content/ popup/ icons/ \
+  -x '*.tmp' -x '.DS_Store'
+
+# Syntax checks
+node --check background.js inject/interceptor.js content/core.js content/netflix.js content/prime.js popup/popup.js
+python3 -c "import json; json.load(open('manifest.json'))"
+```
+
+## Credits
+
+- Original paper:
+  - Kazutaka Kurihara (2011). "CinemaGazer: a System for Watching Videos at Very High Speed". WISS 2011 (Best Paper Award). [arXiv:1110.0864](https://arxiv.org/abs/1110.0864)
+  - Kazutaka Kurihara (2012). "CinemaGazer: A System for Watching Videos at Very High Speed," Proceedings of the 11th International Working Conference on Advanced Visual Interfaces (AVI'12), pp.108–115.
+- Chrome extension port: Kazutaka Kurihara (Tsuda University)
+
+## License
+
+MIT License. See [LICENSE](./LICENSE).
+
+## Contact
+
+Kazutaka Kurihara (Tsuda University) — kurihara@tsuda.ac.jp
+|
+| `ov` | subtitle overlay (centered) | 1/0 |
+| `hud` | show indicator | 1/0 |
+| `cg` | master enable | 1/0 |
+
+URL parameter overrides are **session-only** (your stored settings are not modified). Once you leave the URL with parameters, your saved settings take effect again.
+
+You can also generate a URL directly from DevTools:
+
+```js
+CinemaGazer.makeShareUrl()
+CinemaGazer.makeShareUrl({ speechRate: 2.0, silentRate: 8.0 })   // temporary override
+```
+
+## Privacy
+
+The extension collects **no personal data**. Subtitle timing data is parsed locally in your browser and never sent to any server. Only the user's settings are stored in `chrome.storage.sync` (synced across the user's own Google account devices). See [PRIVACY.md](./PRIVACY.md) for details.
+
+## Troubleshooting
+
+**Top-right HUD doesn't appear**
+- Make sure the per-site toggle (e.g. "Enable on Netflix") is on in the popup.
+- Open `chrome://extensions/` and check for any errors on the CinemaGazer item.
+
+**Rate switching doesn't happen (HUD stuck on "no subtitles")**
+- Has playback actually started? Subtitle XHR fires when playback begins.
+- Reload the page, then start playback again.
+- In DevTools console:
+  ```js
+  CinemaGazer.info()    // content-script side state
+  __cgDump()             // URLs observed in the page world
+  ```
+
+**Subtitles drift out of sync (especially on Prime)**
+- Use the "Subtitle timing offset" slider in the popup.
+- If it still won't stabilize, turn Prime off in the popup.
+
+## Development
+
+Vanilla JavaScript, no build step.
+
+```bash
+# Package
+zip -r cinemagazer-0.2.10.zip \
+  manifest.json background.js \
+  inject/ content/ popup/ icons/ \
+  -x '*.tmp' -x '.DS_Store'
+
+# Syntax checks
+node --check background.js inject/interceptor.js content/core.js content/netflix.js content/prime.js popup/popup.js
+python3 -c "import json; json.load(open('manifest.json'))"
+```
+
+## Credits
+
+- Original paper:
+  - Kazutaka Kurihara (2011). "CinemaGazer: a System for Watching Videos at Very High Speed". WISS 2011 (Best Paper Award). [arXiv:1110.0864](https://arxiv.org/abs/1110.0864)
+  - Kazutaka Kurihara (2012). "CinemaGazer: A System for Watching Videos at Very High Speed," Proceedings of the 11th International Working Conference on Advanced Visual Interfaces (AVI'12), pp.108–115.
+- Chrome extension port: Kazutaka Kurihara (Tsuda University)
+
+## License
+
+MIT License. See [LICENSE](./LICENSE).
+
+## Contact
+
+Kazutaka Kurihara (Tsuda University) — kurihara@tsuda.ac.jp
