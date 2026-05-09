@@ -234,25 +234,44 @@ MIT License。詳細は [LICENSE](./LICENSE) を参照。
 - If you want to *listen* to the dialogue, around 2.0× is the practical limit. But if you're fine with *reading* the subtitles, 3–5× should still work.
 - Because it uses the existing subtitle data, no preprocessing is needed before watching. Lightweight, no waiting time — snappy.
 - At these extreme speeds, moving your eyes down to read subtitles is too slow! CinemaGazer can show subtitles in the **center** of the screen so you can just stare at the middle and read.
-- Sometimes subtitles get out of sync, or odd subtitles slip through — when that happens, just reload the browser tab.
+- **Sometimes subtitles get out of sync, or odd subtitles slip through — when that happens, just reload the browser tab.**
 - Because playback is unusually fast, please use a sufficiently fast Internet connection.
 - Information will fly at you. Please be mindful of rapid flashing and eye fatigue. Use at your own discretion.
+- The efficiency of fast viewing depends on the accuracy of the subtitles! It can't be used on videos without subtitles, and it's of little use on videos with sloppy subtitling.
 - The rest of this README is AI-generated, so you don't have to read it all. If you just want to use it, jump to **Install** and **Usage**.
 
 ---
 
-This is a Chrome extension that reproduces the method proposed in the paper [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) by Kazutaka Kurihara (Tsuda University), originally presented at WISS 2011 (a Japanese academic conference on Human-Computer Interaction) and AVI 2012, in the context of modern streaming services (Netflix / Amazon Prime Video).
+This is a Chrome extension that reproduces the method proposed in the paper [**CinemaGazer: a System for Watching Videos at Very High Speed**](https://arxiv.org/abs/1110.0864) (Kazutaka Kurihara, 2011), originally presented at WISS 2011 (a Japanese academic conference on Human-Computer Interaction) and AVI 2012, in the context of modern streaming services (Netflix / Amazon Prime Video).
 
-## Why "extreme fast-forwarding" works
+## Install
 
-Long videos contain many segments with **no speech and no subtitles** — establishing shots, silent staging, effect-only scenes. These can be played **at very high speeds with little information loss**. But uniformly fast-forwarding through speech segments makes the dialogue progressively harder to follow until comprehension breaks down.
+### Install from the Chrome Web Store
 
-CinemaGazer applies different playback rates depending on whether subtitles are present at the current time:
+👉 **[Chrome Web Store: CinemaGazer](https://chromewebstore.google.com/detail/cinemagazer/iogcniihehmjmclbhakekencmlplclii)**
 
-- **Subtitle present (= speech)** → an *intelligible* fast rate (default 1.5×)
-- **No subtitle (= non-speech)** → a *skip-through* rate (default 4.0×)
+Just hit "Add to Chrome" on the store page. After installation, open Netflix and start playback — a HUD should appear in the top-right corner. Chrome will auto-update the extension as new versions are released.
 
-These rates are switched dynamically. This is a direct port of the original paper's two-level fast-forwarding technique to streaming services.
+## Usage
+
+1. Start playing a video on Netflix or Prime Video.
+2. (Netflix subtitles are auto-enabled. For Prime, enable subtitles manually and turn on "Enable on Prime Video" in the popup.)
+3. The top-right indicator shows current rate and overall compression ratio.
+4. Click the top-right indicator or the toolbar icon to open settings.
+
+### Settings (popup)
+
+| Setting | Description | Default |
+|---|---|---|
+| Master ON/OFF | Master switch for the extension | ON |
+| Speech rate | Playback rate during subtitle intervals | 1.5× |
+| Non-speech rate | Playback rate during non-subtitle intervals | 4.0× |
+| Min non-speech gap | Skip-rate is only applied to non-speech gaps longer than this | 0.4s |
+| Subtitle offset | Timing nudge for subtitles vs. video (±5s) | 0.0s |
+| Subtitle overlay | Render subtitles in the center; hide native subtitles | OFF |
+| Show indicator | Top-right speed indicator visibility | ON |
+| Enable on Netflix | Enable on Netflix | ON |
+| Enable on Prime Video | Enable on Amazon Prime Video (experimental) | OFF |
 
 ## Demo videos (original system)
 
@@ -267,62 +286,23 @@ These demo videos were released by the original paper to illustrate the concept 
 
 ## Features
 
-- Automatic playback rate switching between speech / non-speech intervals
-- HUD in the top-right corner showing current state (speech / non-speech), current rate, and total compression ratio. Click the HUD to open settings popup.
-- Center subtitle overlay ("centering") with fade — native player subtitles are hidden so only the centered overlay shows.
-- Auto-enable subtitles on Netflix (via the player's internal `setTimedTextTrack` API).
-- Per-site enable/disable (default: Netflix = ON, Prime = OFF).
-- Subtitle timing offset adjustment (±5s).
+- **Automatic playback rate switching between speech / non-speech intervals**
+- **HUD**: Always-on top-right display of "current state (speech / non-speech) / current rate / overall compression ratio". Click the HUD to open the settings popup.
+- **Centered subtitle overlay** ("centering"). The player's native subtitles are hidden so only the centered overlay shows.
+- **Auto-enable subtitles on Netflix** (via the player's internal `setTimedTextTrack` API)
+- **Per-site enable/disable** (default: Netflix = ON, Prime = OFF)
+- **Subtitle timing offset adjustment** (±5s)
 - **Copy a shareable link with your current speed settings** — the blue button in the popup copies the current video URL plus your speed settings to the clipboard. If the recipient also has CinemaGazer installed, they can start playback at the same speed settings as you.
-- Settings synced via `chrome.storage.sync`.
+- Settings synced across the user's Google account devices via `chrome.storage.sync`.
 
 ## Supported sites
 
 | Site | Status | Notes |
 |---|---|---|
 | Netflix (`netflix.com`) | ✅ Stable | Subtitles are auto-enabled by the extension. |
-| Amazon Prime Video (`primevideo.com`, `amazon.co.jp/gp/video/...`, `amazon.com/...`) | ⚠️ Experimental | Subtitle timing can drift on some titles. Default off; toggle in popup. |
+| Amazon Prime Video (`primevideo.com`, `amazon.co.jp/gp/video/...`, `amazon.com/...`) | ⚠️ Experimental | Subtitle timing can drift on some titles, so off by default. Toggle in the popup. |
 
 If subtitles are off on a given title, rate switching is disabled.
-
-## Install
-
-### Chrome Web Store (recommended)
-
-👉 **[Chrome Web Store: CinemaGazer](https://chromewebstore.google.com/detail/cinemagazer/iogcniihehmjmclbhakekencmlplclii)**
-
-Just hit "Add to Chrome" on the store page. After installation, open Netflix and start playback — a HUD should appear in the top-right corner. Chrome will auto-update the extension as new versions are released.
-
-### Developer mode (for development / testing)
-
-For running the extension straight from source:
-
-1. Clone this repository or download a release ZIP and unzip it.
-2. Open `chrome://extensions/` in Chrome.
-3. Enable **Developer mode** (top-right toggle).
-4. Click **"Load unpacked"** and select the project folder.
-5. Open Netflix and start playback — a HUD should appear in the top-right corner.
-
-## Usage
-
-1. Start playing a video on Netflix or Prime Video.
-2. Netflix subtitles are auto-enabled. For Prime, enable subtitles manually and tick "Prime Video で有効化" (enable for Prime Video) in the popup.
-3. The top-right indicator shows current rate and overall compression ratio.
-4. Click the top-right indicator or the toolbar icon to open settings.
-
-### Settings
-
-| Setting | Description | Default |
-|---|---|---|
-| Master ON/OFF | Master switch for the extension | ON |
-| Speech rate | Playback rate during subtitle intervals | 1.5× |
-| Non-speech rate | Playback rate during non-subtitle intervals | 4.0× |
-| Min non-speech gap | Skip-rate is only applied to non-speech gaps longer than this | 0.4s |
-| Subtitle offset | Timing nudge for subtitles vs. video (±5s) | 0.0s |
-| Subtitle overlay | Render subtitles in the center; hide native subtitles | OFF |
-| Show indicator | Top-right speed indicator visibility | ON |
-| Enable on Netflix | Enable on Netflix | ON |
-| Enable on Prime Video | Enable on Amazon Prime Video (experimental) | OFF |
 
 ## Architecture
 
@@ -382,17 +362,40 @@ CinemaGazer.makeShareUrl()
 CinemaGazer.makeShareUrl({ speechRate: 2.0, silentRate: 8.0 })   // temporary override
 ```
 
+## Directory layout
+
+```
+CinemaGazer/
+├── manifest.json
+├── background.js
+├── content/
+│   ├── core.js                 Common control (subtitle parsing / rate switching / HUD / overlay)
+│   ├── netflix.js              Netflix <video> detection adapter
+│   ├── prime.js                Prime Video <video> detection adapter
+│   └── overlay.css
+├── inject/
+│   └── interceptor.js          page-context: fetch/XHR hook + auto-enable Netflix subtitles
+├── popup/
+│   ├── popup.html
+│   ├── popup.css
+│   └── popup.js
+├── icons/
+├── README.md
+├── PRIVACY.md
+└── STORE_SUBMISSION.md
+```
+
 ## Privacy
 
 The extension collects **no personal data**. Subtitle timing data is parsed locally in your browser and never sent to any server. Only the user's settings are stored in `chrome.storage.sync` (synced across the user's own Google account devices). See [PRIVACY.md](./PRIVACY.md) for details.
 
 ## Troubleshooting
 
-**Top-right HUD doesn't appear**
+### Top-right HUD doesn't appear
 - Make sure the per-site toggle (e.g. "Enable on Netflix") is on in the popup.
 - Open `chrome://extensions/` and check for any errors on the CinemaGazer item.
 
-**Rate switching doesn't happen (HUD stuck on "no subtitles")**
+### Rate switching doesn't happen (HUD stuck on "no subtitles")
 - Has playback actually started? Subtitle XHR fires when playback begins.
 - Reload the page, then start playback again.
 - In DevTools console:
@@ -401,7 +404,7 @@ The extension collects **no personal data**. Subtitle timing data is parsed loca
   __cgDump()             // URLs observed in the page world
   ```
 
-**Subtitles drift out of sync (especially on Prime)**
+### Subtitles drift out of sync (especially on Prime)
 - Use the "Subtitle timing offset" slider in the popup.
 - If it still won't stabilize, turn Prime off in the popup.
 
@@ -411,77 +414,11 @@ Vanilla JavaScript, no build step.
 
 ```bash
 # Package
-zip -r cinemagazer-0.2.10.zip \
-  manifest.json background.js \
-  inject/ content/ popup/ icons/ \
-  -x '*.tmp' -x '.DS_Store'
-
-# Syntax checks
-node --check background.js inject/interceptor.js content/core.js content/netflix.js content/prime.js popup/popup.js
-python3 -c "import json; json.load(open('manifest.json'))"
-```
-
-## Credits
-
-- Original paper:
-  - Kazutaka Kurihara (2011). "CinemaGazer: a System for Watching Videos at Very High Speed". WISS 2011 (Best Paper Award). [arXiv:1110.0864](https://arxiv.org/abs/1110.0864)
-  - Kazutaka Kurihara (2012). "CinemaGazer: A System for Watching Videos at Very High Speed," Proceedings of the 11th International Working Conference on Advanced Visual Interfaces (AVI'12), pp.108–115.
-- Chrome extension port: Kazutaka Kurihara (Tsuda University)
-
-## License
-
-MIT License. See [LICENSE](./LICENSE).
-
-## Contact
-
-Kazutaka Kurihara (Tsuda University) — kurihara@tsuda.ac.jp
-|
-| `ov` | subtitle overlay (centered) | 1/0 |
-| `hud` | show indicator | 1/0 |
-| `cg` | master enable | 1/0 |
-
-URL parameter overrides are **session-only** (your stored settings are not modified). Once you leave the URL with parameters, your saved settings take effect again.
-
-You can also generate a URL directly from DevTools:
-
-```js
-CinemaGazer.makeShareUrl()
-CinemaGazer.makeShareUrl({ speechRate: 2.0, silentRate: 8.0 })   // temporary override
-```
-
-## Privacy
-
-The extension collects **no personal data**. Subtitle timing data is parsed locally in your browser and never sent to any server. Only the user's settings are stored in `chrome.storage.sync` (synced across the user's own Google account devices). See [PRIVACY.md](./PRIVACY.md) for details.
-
-## Troubleshooting
-
-**Top-right HUD doesn't appear**
-- Make sure the per-site toggle (e.g. "Enable on Netflix") is on in the popup.
-- Open `chrome://extensions/` and check for any errors on the CinemaGazer item.
-
-**Rate switching doesn't happen (HUD stuck on "no subtitles")**
-- Has playback actually started? Subtitle XHR fires when playback begins.
-- Reload the page, then start playback again.
-- In DevTools console:
-  ```js
-  CinemaGazer.info()    // content-script side state
-  __cgDump()             // URLs observed in the page world
-  ```
-
-**Subtitles drift out of sync (especially on Prime)**
-- Use the "Subtitle timing offset" slider in the popup.
-- If it still won't stabilize, turn Prime off in the popup.
-
-## Development
-
-Vanilla JavaScript, no build step.
-
-```bash
-# Package
-zip -r cinemagazer-0.2.10.zip \
-  manifest.json background.js \
-  inject/ content/ popup/ icons/ \
-  -x '*.tmp' -x '.DS_Store'
+zip -r cinemagazer-0.2.14.zip \
+  manifest.json background.js _locales \
+  content/core.js content/netflix.js content/prime.js content/overlay.css \
+  inject popup icons \
+  -x '*.DS_Store' -x '*.tmp'
 
 # Syntax checks
 node --check background.js inject/interceptor.js content/core.js content/netflix.js content/prime.js popup/popup.js
