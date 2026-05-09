@@ -235,7 +235,7 @@ MIT License。詳細は [LICENSE](./LICENSE) を参照。
 - Because it uses the existing subtitle data, no preprocessing is needed before watching. Lightweight, no waiting time — snappy.
 - At these extreme speeds, moving your eyes down to read subtitles is too slow! CinemaGazer can show subtitles in the **center** of the screen so you can just stare at the middle and read.
 - **Sometimes subtitles get out of sync, or odd subtitles slip through — when that happens, just reload the browser tab.**
-- Because playback is unusually fast, please use a sufficiently fast Internet connection.
+- Because playback is unusually fast, please use a sufficiently fast Internet connection. If loading still can't keep up, try lowering the video quality.
 - Information will fly at you. Please be mindful of rapid flashing and eye fatigue. Use at your own discretion.
 - The efficiency of fast viewing depends on the accuracy of the subtitles! It can't be used on videos without subtitles, and it's of little use on videos with sloppy subtitling.
 - The rest of this README is AI-generated, so you don't have to read it all. If you just want to use it, jump to **Install** and **Usage**.
