@@ -34,6 +34,15 @@
   "labelEnablePrime": {
     "message": "Prime Videoで有効化（実験的）"
   },
+  "labelEnableDisneyplus": {
+    "message": "Disney+で有効化（実験的）"
+  },
+  "labelEnableHulu": {
+    "message": "Huluで有効化（実験的）"
+  },
+  "labelEnableUnext": {
+    "message": "U-NEXTで有効化（実験的）"
+  },
   "footerText": {
     "message": "Netflix / Prime Video の字幕情報から音声区間を抽出して動的に速度切替します"
   },

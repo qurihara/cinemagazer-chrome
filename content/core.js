@@ -15,11 +15,17 @@
       subtitleOffset: 0.0,
       // サイト別の有効化トグル
       enableNetflix: true,
-      enablePrime: false
+      enablePrime: false,
+      // v0.3.x: 実験的サイト
+      enableDisneyplus: false,
+      enableHulu: false,
+      enableUnext: false
     },
     subtitleStores: new Map(),
     currentIntervals: [],
     currentIntervalIdx: -1,
+    // currentIntervals の出処（'xhr' | 'texttrack' | 'dom' | null）
+    intervalSource: null,
     video: null,
     adapter: null,
     rafId: null,
@@ -37,10 +43,14 @@
     domSubtitleInSpeech: false,
     domSilenceStartedAtVideoTime: -1,  // 字幕が消えた瞬間の video.currentTime
     lastSubtitleHandledAt: 0,
-    // 次エピソード先読み対策: 現在の字幕がある状態で新しい字幕が届いたら pending として保留し、
-    // URL変化（=エピソード切替）のタイミングで current に昇格させる。
+    // 次エピソード先読み対策
     pendingIntervals: null,
-    pendingIntervalsUrl: ''
+    pendingIntervalsUrl: '',
+    // TextTrack 観察ハンドル
+    textTrackObserverAttached: false,
+    textTrackRef: null,
+    // 広告再生中フラグ（adapter.isAdPlaying() を tick() のキャッシュとして保持）
+    adActive: false
   };
 
   const log  = (...a) => console.log('%c[CinemaGazer]', 'color:#c33;font-weight:bold', ...a);
@@ -155,6 +165,23 @@
     return overrides;
   }
 
+  // アダプタ名 → 設定キーの対応。Netflix のみ既定ON、他は明示的にtrueで有効。
+  const SITE_ENABLE_KEY = {
+    netflix:    'enableNetflix',
+    prime:      'enablePrime',
+    disneyplus: 'enableDisneyplus',
+    hulu:       'enableHulu',
+    unext:      'enableUnext'
+  };
+  function isSiteEnabled(name) {
+    if (!name) return false;
+    const key = SITE_ENABLE_KEY[name];
+    if (!key) return false;
+    const v = STATE.settings[key];
+    if (name === 'netflix') return v !== false; // Netflix のみ既定 ON
+    return v === true;
+  }
+
   async function loadSettings() {
     try {
       const s = await chrome.storage.sync.get(null);
@@ -224,6 +251,12 @@
 
   function handleSubtitle(url, body) {
     if (!body) return;
+    // texttrack-preferred のアダプタで TextTrack 由来 cue が入っている場合は
+    // XHR 由来データで上書きしない（DAI 広告ズレ問題を避ける）。
+    if (STATE.intervalSource === 'texttrack' && STATE.currentIntervals.length > 0
+        && STATE.adapter && STATE.adapter.subtitleStrategy === 'texttrack-preferred') {
+      return;
+    }
     let intervals = null;
     const head = body.slice(0, 200).trim();
     try {
@@ -264,6 +297,7 @@
       STATE.currentIntervals = intervals;
       STATE.currentIntervalIdx = -1;
       STATE.compressionCache.cueCount = -1;
+      STATE.intervalSource = 'xhr';
       STATE.lastSubtitleHandledAt = Date.now();
       log('subtitle parsed: ' + intervals.length + ' cues  '
           + 'first=' + f[0].toFixed(2) + 's last_end=' + l[1].toFixed(2) + 's  '
@@ -502,11 +536,27 @@
     }
     // 全体OFF / サイト別OFF の場合は何もしない（HUD/Overlayも隠す）
     const adapterName = STATE.adapter && STATE.adapter.name;
-    const siteEnabled =
-      (adapterName === 'netflix' && STATE.settings.enableNetflix !== false) ||
-      (adapterName === 'prime'   && STATE.settings.enablePrime   === true);
-    if (!STATE.settings.enabled || !siteEnabled) {
-      if (STATE.hudEl) STATE.hudEl.style.display = 'none';
+    const siteEnabled = isSiteEnabled(adapterName);
+    // adapter.isAdPlaying は Prime 等で広告区間検出に使う任意フック。
+    // 広告中は速度切替を行わず（ネイティブ再生に任せ）、字幕オフセット累積を避ける。
+    let adActive = false;
+    try {
+      if (STATE.adapter && typeof STATE.adapter.isAdPlaying === 'function') {
+        adActive = !!STATE.adapter.isAdPlaying();
+      }
+    } catch (e) { adActive = false; }
+    STATE.adActive = adActive;
+    if (!STATE.settings.enabled || !siteEnabled || adActive) {
+      if (adActive) setRate(1.0); // 広告中は等倍
+      if (STATE.hudEl) {
+        if (adActive && STATE.settings.showHud && siteEnabled && STATE.settings.enabled) {
+          STATE.hudEl.style.display = 'block';
+          STATE.hudEl.textContent = 'AD  1.00×';
+          STATE.hudEl.style.background = 'rgba(120,120,120,.7)';
+        } else {
+          STATE.hudEl.style.display = 'none';
+        }
+      }
       if (STATE.overlayEl) STATE.overlayEl.style.display = 'none';
       document.documentElement.classList.remove('cg-overlay-active');
       STATE.rafId = requestAnimationFrame(tick);
@@ -662,13 +712,30 @@
   // 利点: XHRフックが届かない場合（service worker経由配信、内部キャッシュ、URLパターン変更）でも動く。
   // 欠点: 先読みできないため compression ratio は概算しか出せない。
   const NATIVE_SUBTITLE_SELECTORS = [
+    // Netflix
     '.player-timedtext',
     '[data-uia="player-timedtext"]',
     '.player-timedtext-text-container',
+    // Prime Video
     '.atvwebplayersdk-captions-overlay',
     '.atvwebplayersdk-captions-text',
+    // Disney+
+    '.dss-captions-renderer',
+    '.dss-subtitle-renderer-line',
+    '.btm-media-overlays-container [class*="caption"]',
+    // Hulu (US/JP)
+    '.CaptionBox',
+    '.caption-text-box',
+    '[data-automationid*="captions"]',
+    '[data-automationid*="subtitle"]',
+    // U-NEXT
+    '[class*="subtitle-text"]',
+    '[class*="SubtitleText"]',
+    // 汎用フォールバック
     '[class*="captions-overlay"]',
-    '[class*="captionsOverlay"]'
+    '[class*="captionsOverlay"]',
+    '[class*="captionContainer"]',
+    '[class*="captioncontainer"]'
   ];
   function readNativeSubtitleText() {
     for (const sel of NATIVE_SUBTITLE_SELECTORS) {
@@ -691,7 +758,18 @@
       }
     };
     // プレイヤーコンテナを subtree 監視。childList/characterData ともに見て字幕の更新を逃さない。
-    const playerSel = '[data-uia="player"], .NFPlayer, .webPlayerSDKContainer, [id^="atvwebplayersdk"]';
+    const playerSel = [
+      // Netflix
+      '[data-uia="player"]', '.NFPlayer',
+      // Prime Video
+      '.webPlayerSDKContainer', '[id^="atvwebplayersdk"]',
+      // Disney+
+      '.btm-media-client-element', '.btm-media-overlays-container',
+      // Hulu
+      '.PlayerContainer', '.controls__player-container', '[data-testid="player-container"]',
+      // U-NEXT
+      '[class*="PlayerWrap"]', '[class*="player-wrapper"]'
+    ].join(', ');
     const attachObserver = () => {
       const player = document.querySelector(playerSel) || document.body;
       const mo = new MutationObserver(update);
@@ -714,13 +792,108 @@
     setInterval(update, 200);
   }
 
+  // ====================================================================
+  // TextTrack 観察: <video>.textTracks の cue を currentIntervals に流し込む。
+  //
+  // 利点:
+  //   - cue が「メディア時刻」で得られる（ブラウザが DAI 広告挿入分をオフセット済み）
+  //   - XHR で字幕URLを捕まえなくても動く → Disney+/Hulu/U-NEXT に有効
+  //   - Prime Video の広告ズレ問題への根本解決策
+  //
+  // 採用条件:
+  //   - adapter.subtitleStrategy === 'texttrack-preferred' のとき有効化
+  //   - ユーザがサイト側で字幕(captions/subtitles)を ON にしている必要あり
+  //   - cue が無ければ何もしない（XHR/DOM フォールバックに譲る）
+  // ====================================================================
+  function startTextTrackObserver(video) {
+    if (!video || STATE.textTrackObserverAttached) return;
+    if (!video.textTracks) return;
+    STATE.textTrackObserverAttached = true;
+    const tracks = video.textTracks;
+
+    function findActiveTrack() {
+      for (let i = 0; i < tracks.length; i++) {
+        const t = tracks[i];
+        const kind = (t.kind || '').toLowerCase();
+        if ((kind === 'subtitles' || kind === 'captions') && t.mode === 'showing') {
+          return t;
+        }
+      }
+      return null;
+    }
+
+    function populateFromTrack(t) {
+      if (!t || !t.cues) return false;
+      const cues = t.cues;
+      if (!cues.length) return false;
+      const arr = [];
+      for (let i = 0; i < cues.length; i++) {
+        const c = cues[i];
+        if (c == null) continue;
+        const s = c.startTime, e = c.endTime;
+        if (!isFinite(s) || !isFinite(e) || e <= s) continue;
+        const txt = (c.text || '').replace(/<[^>]+>/g, '').trim();
+        arr.push([s, e, txt]);
+      }
+      if (!arr.length) return false;
+      arr.sort((a, b) => a[0] - b[0]);
+      STATE.currentIntervals = arr;
+      STATE.currentIntervalIdx = -1;
+      STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+      STATE.intervalSource = 'texttrack';
+      STATE.lastSubtitleHandledAt = Date.now();
+      log('TextTrack cues populated: ' + arr.length + ' cues (source=texttrack)');
+      return true;
+    }
+
+    function onCueChange() {
+      if (STATE.textTrackRef && STATE.textTrackRef.cues
+          && STATE.textTrackRef.cues.length !== STATE.currentIntervals.length) {
+        populateFromTrack(STATE.textTrackRef);
+      }
+    }
+
+    function syncTrack() {
+      const t = findActiveTrack();
+      if (t === STATE.textTrackRef) {
+        if (t && t.cues && t.cues.length !== STATE.currentIntervals.length) populateFromTrack(t);
+        return;
+      }
+      if (STATE.textTrackRef) {
+        try { STATE.textTrackRef.removeEventListener('cuechange', onCueChange); } catch (e) {}
+      }
+      STATE.textTrackRef = t;
+      if (t) {
+        try { t.addEventListener('cuechange', onCueChange); } catch (e) {}
+        populateFromTrack(t);
+      } else {
+        if (STATE.intervalSource === 'texttrack') {
+          STATE.currentIntervals = [];
+          STATE.currentIntervalIdx = -1;
+          STATE.intervalSource = null;
+          log('TextTrack: no showing track, cleared currentIntervals');
+        }
+      }
+    }
+
+    try { tracks.addEventListener && tracks.addEventListener('change', syncTrack); } catch (e) {}
+    setInterval(syncTrack, 1000);
+    syncTrack();
+    log('TextTrack observer attached');
+  }
+
   function attachVideo(v) {
     if (!v || STATE.video === v) return;
     STATE.video = v;
+    STATE.textTrackObserverAttached = false;
+    STATE.textTrackRef = null;
     log('attached video', v);
     ensureHud();
     ensureOverlay();
     startSubtitleDOMObserver();
+    if (STATE.adapter && STATE.adapter.subtitleStrategy === 'texttrack-preferred') {
+      startTextTrackObserver(v);
+    }
     if (!STATE.rafId) STATE.rafId = requestAnimationFrame(tick);
     startRateGuard();
   }

@@ -34,11 +34,20 @@
   "labelEnablePrime": {
     "message": "Enable on Prime Video (experimental)"
   },
+  "labelEnableDisneyplus": {
+    "message": "Enable on Disney+ (experimental)"
+  },
+  "labelEnableHulu": {
+    "message": "Enable on Hulu (experimental)"
+  },
+  "labelEnableUnext": {
+    "message": "Enable on U-NEXT (experimental)"
+  },
   "footerText": {
     "message": "Extracts speech intervals from Netflix / Prime Video subtitles and switches playback rate dynamically."
   },
   "hudSpeech": {
-    "message": "   Speech"
+    "message": "   Speech"
   },
   "hudSilent": {
     "message": "Non-speech"

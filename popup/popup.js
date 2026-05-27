@@ -1,4 +1,4 @@
-const FIELDS = ['enabled', 'speechRate', 'silentRate', 'silentMinGap', 'subtitleOffset', 'overlayEnabled', 'showHud', 'enableNetflix', 'enablePrime'];
+const FIELDS = ['enabled', 'speechRate', 'silentRate', 'silentMinGap', 'subtitleOffset', 'overlayEnabled', 'showHud', 'enableNetflix', 'enablePrime', 'enableDisneyplus', 'enableHulu', 'enableUnext'];
 
 function $(id) { return document.getElementById(id); }
 
@@ -27,6 +27,9 @@ async function load() {
   $('showHud').checked = s.showHud !== false;
   $('enableNetflix').checked = s.enableNetflix !== false; // 既定 ON
   $('enablePrime').checked = s.enablePrime === true;       // 既定 OFF
+  $('enableDisneyplus').checked = s.enableDisneyplus === true; // 既定 OFF
+  $('enableHulu').checked = s.enableHulu === true;             // 既定 OFF
+  $('enableUnext').checked = s.enableUnext === true;           // 既定 OFF
   refreshOutputs();
 }
 
@@ -48,7 +51,10 @@ async function save() {
     overlayEnabled: $('overlayEnabled').checked,
     showHud: $('showHud').checked,
     enableNetflix: $('enableNetflix').checked,
-    enablePrime: $('enablePrime').checked
+    enablePrime: $('enablePrime').checked,
+    enableDisneyplus: $('enableDisneyplus').checked,
+    enableHulu: $('enableHulu').checked,
+    enableUnext: $('enableUnext').checked
   };
   await chrome.storage.sync.set(settings);
   // chrome.storage.onChanged が content script 側で発火するので ブロードキャストは任意

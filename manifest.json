@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "0.2.15",
+  "version": "0.3.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
   "author": "Kazutaka Kurihara (Tsuda University)",
@@ -13,7 +13,13 @@
     "*://*.amazon.co.jp/*",
     "*://*.amazon.com/*",
     "*://*.media-amazon.com/*",
-    "*://*.aiv-cdn.net/*"
+    "*://*.aiv-cdn.net/*",
+    "*://*.disneyplus.com/*",
+    "*://*.bamgrid.com/*",
+    "*://*.hulu.com/*",
+    "*://*.hulu.jp/*",
+    "*://*.unext.jp/*",
+    "*://*.nxtv.jp/*"
   ],
   "background": { "service_worker": "background.js" },
   "action": {
@@ -70,6 +76,33 @@
       "css": ["content/overlay.css"],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["*://*.disneyplus.com/*"],
+      "js": ["content/core.js", "content/disneyplus.js"],
+      "css": ["content/overlay.css"],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "*://*.hulu.com/*",
+        "*://*.hulu.jp/*"
+      ],
+      "js": ["content/core.js", "content/hulu.js"],
+      "css": ["content/overlay.css"],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "*://*.unext.jp/*",
+        "*://*.nxtv.jp/*"
+      ],
+      "js": ["content/core.js", "content/unext.js"],
+      "css": ["content/overlay.css"],
+      "run_at": "document_start",
+      "all_frames": false
     }
   ],
   "web_accessible_resources": [

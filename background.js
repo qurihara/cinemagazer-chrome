@@ -11,8 +11,12 @@ const DEFAULTS = {
   overlayFadeMs: 200,
   showHud: true,      // 画面端の現在速度HUD
   subtitleOffset: 0.0, // 字幕の体感ズレを微調整（秒, +で字幕を遅らせる）
-  enableNetflix: true, // Netflix で本拡張を有効化
-  enablePrime: false   // Prime Video で本拡張を有効化（既定OFF: 字幕同期がコンテンツ依存で不安定なため）
+  enableNetflix: true,    // Netflix で本拡張を有効化
+  enablePrime: false,     // Prime Video（既定OFF: 字幕同期がコンテンツ依存で不安定なため）
+  // v0.3.x: 追加サービス（いずれも既定OFFの実験的サポート）
+  enableDisneyplus: false, // Disney+
+  enableHulu: false,       // Hulu (US/JP)
+  enableUnext: false       // U-NEXT
 };
 
 // schemaVersion: マイグレーション一度だけ走らせるためのフラグ
