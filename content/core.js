@@ -902,13 +902,35 @@
   function attachVideo(v) {
     if (!v || STATE.video === v) return;
     STATE.video = v;
-    // DAI広告オフセットは新メディア読込(エピソード切替)でリセット
+    // メディア切替/終了時のリセット
+    //   - 広告オフセット(adTimeOffset): 全アダプタでリセット
+    //   - 字幕状態(currentIntervals等): Netflix は preload+URL-swap で次エピソードへ
+    //     引き継ぐので触らない。Prime等(preload非対応)は新作品/再生終了で前作品の
+    //     古いcueが残って無関係字幕が流れるのを防ぐためクリア(pendingがあれば昇格)。
     STATE.adTimeOffset = 0;
     STATE.adLastTime = -1;
     try {
       const _resetAdOff = function () { STATE.adTimeOffset = 0; STATE.adLastTime = -1; };
-      v.addEventListener('loadstart', _resetAdOff);
-      v.addEventListener('emptied', _resetAdOff);
+      const _resetSubs = function () {
+        if (STATE.adapter && STATE.adapter.name === 'netflix') return; // Netflixはpreload/URL-swapに任せる
+        if (STATE.pendingIntervals && STATE.pendingIntervals.length) {
+          STATE.currentIntervals = STATE.pendingIntervals; // 新作品用に先着していれば昇格
+          STATE.intervalSource = 'xhr';
+        } else {
+          STATE.currentIntervals = [];
+          STATE.intervalSource = null;
+        }
+        STATE.pendingIntervals = null;
+        STATE.pendingIntervalsUrl = '';
+        STATE.currentIntervalIdx = -1;
+        STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+        hideOverlay();
+      };
+      const _onMedia = function () { _resetAdOff(); _resetSubs(); };
+      v.addEventListener('loadstart', _onMedia);
+      v.addEventListener('emptied', _onMedia);
+      v.addEventListener('ended', _onMedia);
+      _resetSubs(); // 新しいvideo要素にattachした瞬間も前作品のcueをクリア(非Netflix)
     } catch (e) {}
     STATE.textTrackObserverAttached = false;
     STATE.textTrackRef = null;
@@ -999,7 +1021,7 @@
       // URL変化後3秒以内に字幕が来ていなければ警告ログ（デバッグ用）
       if (lastUrlChangeAt && Date.now() - lastUrlChangeAt > 3000 && STATE.currentIntervals.length === 0) {
         if (STATE.video && STATE.video.readyState >= 2 && STATE.video.currentTime > 1) {
-          warn('URL変化後3秒経っても字幕が捕捉できていません。Netflix側で字幕がOFFのまま、または字幕XHRのURLパターンに変更があった可能性。');
+          warn('URL変化後3秒経っても字幕が捕捉できていません。プレイヤー側で字幕がOFFのまま（字幕をONにしてください）、または字幕XHRのURLパターンに変更があった可能性。');
           lastUrlChangeAt = 0; // 一度警告したら抑止
         }
       }
