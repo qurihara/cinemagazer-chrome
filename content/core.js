@@ -50,7 +50,10 @@
     textTrackObserverAttached: false,
     textTrackRef: null,
     // 広告再生中フラグ（adapter.isAdPlaying() を tick() のキャッシュとして保持）
-    adActive: false
+    adActive: false,
+    // DAI(動的広告挿入)対策: 広告で進んだ currentTime 量(本編外)を積算し cue照合で差し引く
+    adTimeOffset: 0,
+    adLastTime: -1
   };
 
   const log  = (...a) => console.log('%c[CinemaGazer]', 'color:#c33;font-weight:bold', ...a);
@@ -546,6 +549,17 @@
       }
     } catch (e) { adActive = false; }
     STATE.adActive = adActive;
+    // DAI対策: 広告中は currentTime が進むが XHR字幕cueは本編タイムライン基準。
+    // 広告中の currentTime 進行量を adTimeOffset に積算し、cue照合時に差し引く。
+    if (adActive) {
+      if (STATE.adLastTime >= 0) {
+        const _d = v.currentTime - STATE.adLastTime;
+        if (_d > 0 && _d < 2.0) STATE.adTimeOffset += _d; // シーク等の飛びは無視
+      }
+      STATE.adLastTime = v.currentTime;
+    } else {
+      STATE.adLastTime = -1;
+    }
     if (!STATE.settings.enabled || !siteEnabled || adActive) {
       if (adActive) setRate(1.0); // 広告中は等倍
       if (STATE.hudEl) {
@@ -570,8 +584,11 @@
     // 体感ズレ補正: t (動画時刻) を字幕時刻軸に揃える
     //   subtitleOffset > 0 なら字幕を遅らせて表示 → 動画時刻から差し引いた値で cue 検索
     const off = Number(STATE.settings.subtitleOffset) || 0;
+    // XHR由来cueは本編時刻基準なので DAI広告分(adTimeOffset)を差し引く。
+    // texttrack由来はブラウザがメディア時刻(広告込み)で提供するので差し引かない。
+    const adOff = (STATE.intervalSource === 'xhr') ? STATE.adTimeOffset : 0;
     const t = v.currentTime;
-    const tCue = t - off;
+    const tCue = t - off - adOff;
     let inSpeech = false;
     let usedDomFallback = false;
     if (STATE.currentIntervals.length) {
@@ -885,6 +902,14 @@
   function attachVideo(v) {
     if (!v || STATE.video === v) return;
     STATE.video = v;
+    // DAI広告オフセットは新メディア読込(エピソード切替)でリセット
+    STATE.adTimeOffset = 0;
+    STATE.adLastTime = -1;
+    try {
+      const _resetAdOff = function () { STATE.adTimeOffset = 0; STATE.adLastTime = -1; };
+      v.addEventListener('loadstart', _resetAdOff);
+      v.addEventListener('emptied', _resetAdOff);
+    } catch (e) {}
     STATE.textTrackObserverAttached = false;
     STATE.textTrackRef = null;
     log('attached video', v);
@@ -938,6 +963,7 @@
         lastUrl = location.href;
         lastUrlChangeAt = Date.now();
         log('url change', lastUrl);
+        STATE.adTimeOffset = 0; STATE.adLastTime = -1; // 新エピソードで広告オフセットをリセット
         // URL overrides を新URLに対して再適用（無ければ保存設定に戻す）
         try {
           chrome.storage.sync.get(null).then(s => {
