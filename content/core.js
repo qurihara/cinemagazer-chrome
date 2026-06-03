@@ -579,6 +579,9 @@
       // サイト有効時はユーザ設定に従って表示
       if (STATE.hudEl) STATE.hudEl.style.display = STATE.settings.showHud ? 'block' : 'none';
       if (STATE.overlayEl) STATE.overlayEl.style.display = STATE.settings.overlayEnabled ? 'block' : 'none';
+      // 広告中ブランチで外した cg-overlay-active を再付与する。これが無いと広告後に
+      // ネイティブ字幕の非表示CSSが効かなくなり、中央字幕と二重表示になる。
+      document.documentElement.classList.toggle('cg-overlay-active', !!STATE.settings.overlayEnabled);
     }
 
     // 体感ズレ補正: t (動画時刻) を字幕時刻軸に揃える
@@ -629,7 +632,16 @@
     setRate(target);
 
     if (STATE.settings.overlayEnabled) {
-      if (STATE.currentIntervals.length) {
+      // Prime等(非Netflix)は DAI広告offsetの残差で XHR cue の照合時刻がズレることがある。
+      // ネイティブ字幕DOMは常に正しい時刻なので、中央表示はそれに合わせる
+      // (ネイティブはCSSで隠し、同じテキストを中央に出す＝二重表示も防ぐ)。
+      // 速度判定・圧縮率は引き続き XHR cue を使う。
+      const preferNativeText =
+        STATE.adapter && STATE.adapter.name !== 'netflix' && STATE.domObserverActive;
+      if (preferNativeText) {
+        if (STATE.domSubtitleText) showOverlay(STATE.domSubtitleText);
+        else hideOverlay();
+      } else if (STATE.currentIntervals.length) {
         const idx = STATE.currentIntervalIdx;
         const cue = (idx >= 0 && STATE.currentIntervals[idx]) || null;
         if (cue && cue[0] <= tCue && tCue < cue[1]) showOverlay(cue[2]);
