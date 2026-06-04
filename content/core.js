@@ -530,10 +530,37 @@
     return (nextStart - Math.max(prevEnd, t)) >= STATE.settings.silentMinGap;
   }
 
+  // 自動プレビュー(トレーラー)判定。動画詳細ページ等では本編でない自動プレビューが
+  // 0x0 / 微小 / 画面外の video 要素として再生される。そこへ高速化やHUDを出すのは
+  // 無意味なので、エンジン制御の対象外にする。muted では判定しない（ミュートで字幕だけ
+  // 追う実鑑賞もあるため）。実寸・可視性で「実プレイヤーか否か」を見る。実プレイヤー
+  // （全画面・ビューポートの大部分を占有）は対象のまま＝通常再生には影響しない。
+  function isLikelyPreviewVideo(v) {
+    if (!v) return false;
+    if (document.fullscreenElement || document.webkitFullscreenElement) return false;
+    const w = v.offsetWidth, h = v.offsetHeight;
+    if (w === 0 || h === 0) return true; // 非表示/0サイズ = プレビュー
+    const vpArea = (window.innerWidth || 1) * (window.innerHeight || 1);
+    if (w * h < vpArea * 0.15) return true; // ビューポートの15%未満 = 実プレイヤーでない
+    const r = v.getBoundingClientRect();
+    if (r.bottom <= 0 || r.top >= (window.innerHeight || 0)) return true; // 画面外
+    return false;
+  }
+
   function tick() {
     STATE.rafId = null;
     const v = STATE.video;
     if (!v || v.readyState < 1) {
+      STATE.rafId = requestAnimationFrame(tick);
+      return;
+    }
+    // 詳細ページの自動プレビュー等はエンジン制御せず、本来の再生に任せる
+    // （速度は等倍へ戻し、HUD/オーバーレイは出さない）。
+    if (isLikelyPreviewVideo(v)) {
+      setRate(1.0);
+      if (STATE.hudEl) STATE.hudEl.style.display = 'none';
+      if (STATE.overlayEl) STATE.overlayEl.style.display = 'none';
+      document.documentElement.classList.remove('cg-overlay-active');
       STATE.rafId = requestAnimationFrame(tick);
       return;
     }
