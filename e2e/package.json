@@ -1,0 +1,13 @@
+{
+  "name": "cinemagazer-e2e",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CinemaGazer Chrome拡張の自動E2Eテスト (ローカルtestbed / DRM不要)",
+  "scripts": {
+    "build": "node build-dev-ext.js",
+    "test": "node build-dev-ext.js && node run-test.js"
+  },
+  "dependencies": {
+    "playwright": "^1.54.0"
+  }
+}
