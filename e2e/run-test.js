@@ -148,7 +148,8 @@ async function runImageScenario(context, name, pagePath) {
     if (!shotSilence && isSilenceTime(s.t) && s.hudText) {
       await page.screenshot({ path: path.join(SHOTS, `${name}-silence.png`) }); shotSilence = true;
     }
-    if (shotSpeech && shotSilence && samples.length > 60) break;
+    // 推定圧縮率(EST_MIN_VID=20秒の動画時間観測後に出る)まで見るため、
+    // 早期break はせず deadline(26秒)まで走らせる。
     await new Promise(r => setTimeout(r, 150));
   }
   await page.close();
@@ -162,6 +163,7 @@ async function runImageScenario(context, name, pagePath) {
     '字幕画像あり区間で 1.5x': speechSamples.some(s => near(s.rate, 1.5)),
     '字幕画像なし区間で 4.0x': silenceSamples.some(s => near(s.rate, 4.0)),
     'HUDに音声バッジ': samples.some(s => s.hudText && s.hudText.includes('音声')),
+    'HUDに推定圧縮率(~% 圧縮)': samples.some(s => s.hudText && s.hudText.includes('圧縮')),
     'JSエラーなし': !consoleLogs.some(l => /uncaught|TypeError|ReferenceError/i.test(l))
   };
   return { name, checks, samples: samples.length, speechSamples: speechSamples.length, silenceSamples: silenceSamples.length, consoleLogs };

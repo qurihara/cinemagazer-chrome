@@ -36,6 +36,10 @@
     lastShownAt: 0,
     interceptorReady: false,
     compressionCache: { duration: 0, cueCount: 0, settingsHash: '', ratio: null },
+    // 全編cueが手元に無いモード(xhr-segmented=Disney+ / image-presence=Hulu / DOM観察)向けの
+    // 圧縮率・残り時間「推定」用。実際に適用した再生速度から、観測済み区間の
+    // 実時間(wall)と動画時間(vid)を累積し、平均圧縮率を推定する。
+    estAccum: { vid: 0, wall: 0, lastT: -1 },
     // DOM観察ベースのフォールバック（XHRで字幕が取れなかった時用）
     domObserverActive: false,
     domSubtitleText: '',
@@ -145,6 +149,16 @@
     const ratio = compressed / D;
     c.duration = D; c.cueCount = arr.length; c.settingsHash = hash; c.ratio = ratio;
     return ratio;
+  }
+
+  // 全編cueが無いモード(Disney+/Hulu/DOM観察)向けの「推定」圧縮率。
+  // 観測済み区間で実際に適用した速度から平均圧縮率(=実時間/動画時間)を求め、
+  // 残りも同じ傾向と仮定して外挿する。最低 EST_MIN_VID 秒観測してから返す。
+  const EST_MIN_VID = 20; // 動画時間でこの秒数を観測するまでは推定を出さない
+  function estimateCompressionRatio() {
+    const a = STATE.estAccum;
+    if (a.vid < EST_MIN_VID || a.wall <= 0) return null;
+    return a.wall / a.vid;
   }
 
   // URLクエリ/ハッシュから「シェア用パラメータ」を読んで設定をオーバーライド。
@@ -767,6 +781,21 @@
     }
     setRate(target);
 
+    // 推定圧縮率のための累積(全編cueが無いモード用)。実際に適用した速度 target で、
+    // 動画時間dtとその実時間dt/targetを足す。シーク/一時停止/ループ跨ぎ(負や大ジャンプ)は除外。
+    {
+      const nowT = v.currentTime;
+      const last = STATE.estAccum.lastT;
+      if (last >= 0) {
+        const dt = nowT - last;
+        if (dt > 0 && dt < 2 && target > 0 && !v.paused) {
+          STATE.estAccum.vid += dt;
+          STATE.estAccum.wall += dt / target;
+        }
+      }
+      STATE.estAccum.lastT = nowT;
+    }
+
     if (STATE.settings.overlayEnabled) {
       // Prime等(非Netflix)は DAI広告offsetの残差で XHR cue の照合時刻がズレることがある。
       // ネイティブ字幕DOMは常に正しい時刻なので、中央表示はそれに合わせる
@@ -807,7 +836,9 @@
         label = '—';
       }
       const ratio = computeCompressionRatio();
-      // tail: 圧縮率（XHRモード時のみ計算可）/ 状態（DOMモードは省略 = 動作中で表示なし）
+      // 全編cueが無いモード(Disney+/Hulu/DOM観察)は正確値が出ないので推定値を使う。
+      const estRatio = (ratio == null) ? estimateCompressionRatio() : null;
+      // tail: 圧縮率（正確値=XHR全取得時 / 推定値=Disney+/Hulu等） / 状態
       let tail = '';
       // xhr-segmented のレジューム同期状態を優先表示(A: 安全ガードの可視化)
       if (isSegmented && cueCount > 0 && !STATE.segOffsetLocked) {
@@ -820,6 +851,10 @@
         const pct = Math.round((1 - ratio) * 100);
         // 圧縮率は0–99% (時に100%超もありうるが稀)。3桁分の幅で固定。
         tail = padLeftFig(pct, 3) + i18n('hudCompressedSuffix', '% 圧縮');
+      } else if (estRatio != null) {
+        // 推定圧縮率。全編の正確値ではないため先頭に「~」を付けて区別する。
+        const pct = Math.round((1 - estRatio) * 100);
+        tail = '~' + padLeftFig(pct, 3) + i18n('hudCompressedSuffix', '% 圧縮');
       } else if (!usedDomFallback && cueCount === 0) {
         // cue がある場合は ratio が出せなくても「字幕未取得」とは表示しない
         // (xhr-segmented は cue があっても ratio 非表示のため)
@@ -830,13 +865,19 @@
         }
       }
       // 残り視聴時間（このペースで見続けた場合の見積もり）
-      const remSec = computeRemainingViewingTime();
+      let remSec = computeRemainingViewingTime();
+      let remEstimated = false;
+      // 正確値が出ないモード(Disney+/Hulu等)は推定圧縮率で残り時間も推定する。
+      if (remSec == null && estRatio != null && v.duration && isFinite(v.duration)) {
+        remSec = Math.max(0, v.duration - v.currentTime) * estRatio;
+        remEstimated = true;
+      }
       const remStr = formatHMS(remSec);
       let remPart = '';
       if (remStr) {
         const tpl = i18n('hudRemainingFormat', '残り {time}');
-        // 「H:MM:SS」(7) を最大幅と仮定して左パディング
-        remPart = tpl.replace('{time}', padLeftFig(remStr, 7));
+        // 「H:MM:SS」(7) を最大幅と仮定して左パディング。推定時は先頭に「~」。
+        remPart = tpl.replace('{time}', (remEstimated ? '~' : '') + padLeftFig(remStr, 7));
       }
       // 速度: 0.50–16.00 までを5文字幅 (XX.XX) で固定
       const rateStr = padLeftFig(target.toFixed(2), 5) + '×';
@@ -1079,6 +1120,7 @@
       STATE.currentIntervals = arr;
       STATE.currentIntervalIdx = -1;
       STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+      STATE.estAccum = { vid: 0, wall: 0, lastT: -1 };
       STATE.intervalSource = 'texttrack';
       STATE.lastSubtitleHandledAt = Date.now();
       log('TextTrack cues populated: ' + arr.length + ' cues (source=texttrack)');
@@ -1146,6 +1188,7 @@
         STATE.pendingIntervalsUrl = '';
         STATE.currentIntervalIdx = -1;
         STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+      STATE.estAccum = { vid: 0, wall: 0, lastT: -1 };
         // 新エピソード/メディアはタイムラインが別 → segOffsetを再確定させる
         STATE.segOffset = 0;
         STATE.sawTso = false;
@@ -1241,6 +1284,7 @@
           STATE.currentIntervals = STATE.pendingIntervals;
           STATE.currentIntervalIdx = -1;
           STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+      STATE.estAccum = { vid: 0, wall: 0, lastT: -1 };
           STATE.pendingIntervals = null;
           STATE.pendingIntervalsUrl = '';
           STATE.lastSubtitleHandledAt = Date.now();
@@ -1249,6 +1293,7 @@
           STATE.currentIntervals = [];
           STATE.currentIntervalIdx = -1;
           STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+      STATE.estAccum = { vid: 0, wall: 0, lastT: -1 };
         }
         tryAttach();
       }
