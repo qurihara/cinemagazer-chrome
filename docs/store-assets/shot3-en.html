@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1280px;height:800px;overflow:hidden}
+  .stage{width:1280px;height:800px;display:flex;align-items:center;gap:80px;padding:0 96px;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Segoe UI",system-ui,sans-serif;
+    background:linear-gradient(160deg,#0e1626 0%,#16223a 100%);color:#eaf1fb}
+  .popcol{flex:none}
+  .popcard{background:#f7f7f9;border-radius:14px;overflow:hidden;width:430px;
+    box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .popcard img{display:block;width:430px;height:auto}
+  .right{flex:1}
+  .right h1{font-size:46px;font-weight:900;line-height:1.25}
+  .right h1 .g{color:#7fb0ff}
+  .right p{margin-top:20px;font-size:22px;color:#b9c6da;font-weight:600;line-height:1.6}
+  .svc{margin-top:30px;display:flex;flex-wrap:wrap;gap:12px}
+  .chip{font-size:20px;font-weight:800;padding:10px 20px;border-radius:999px;
+    background:rgba(255,255,255,.06);border:1px solid rgba(127,176,255,.28);color:#dbe6f7}
+  .bul{margin-top:30px;list-style:none;font-size:20px;font-weight:600;color:#cdd8e8;line-height:1.9}
+  .bul li{padding-left:26px;position:relative}
+  .bul li::before{content:"";position:absolute;left:0;top:12px;width:9px;height:9px;border-radius:50%;background:#7fb0ff}
+  .foot{position:absolute;left:96px;bottom:34px;font-size:16px;color:#7f8fa4;font-weight:600}
+</style></head><body>
+  <div class="stage">
+    <div class="popcol"><div class="popcard"><img src="popup-en.png" alt="popup"></div></div>
+    <div class="right">
+      <h1>Ready to use on<br><span class="g">4 streaming services</span>.</h1>
+      <p>One-click install. Fine-tune speeds and subtitle display from the popup. No preprocessing needed.</p>
+      <div class="svc">
+        <span class="chip">Netflix</span><span class="chip">Hulu</span>
+        <span class="chip">Disney+</span><span class="chip">Amazon Prime Video</span>
+      </div>
+      <ul class="bul">
+        <li>Auto-switch speech & non-speech rates</li>
+        <li>Centered subtitles to reduce eye movement</li>
+        <li>Shows compression ratio & time left</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">Based on CinemaGazer (WISS 2011 Best Paper) ・ by Kazutaka Kurihara</div>
+</body></html>

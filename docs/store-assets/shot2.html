@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1280px;height:800px;overflow:hidden}
+  .stage{width:1280px;height:800px;padding:70px 90px;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Segoe UI",system-ui,sans-serif;
+    background:linear-gradient(160deg,#0e1626 0%,#16223a 100%);color:#eaf1fb;display:flex;flex-direction:column}
+  h1{font-size:44px;font-weight:900;letter-spacing:.03em}
+  h1 .g{color:#7fb0ff}
+  .lead{margin-top:16px;font-size:23px;color:#b9c6da;font-weight:600;line-height:1.5}
+  .timeline{margin-top:60px;background:rgba(255,255,255,.04);border:1px solid rgba(127,176,255,.18);
+    border-radius:16px;padding:38px 40px 30px}
+  .tlabel{font-size:19px;color:#9fb0c8;font-weight:700;margin-bottom:16px}
+  .bar{display:flex;height:74px;border-radius:10px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+  .seg{display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;position:relative}
+  .speech{background:linear-gradient(180deg,#3c78c8,#2f60a4)}
+  .silent{background:linear-gradient(180deg,#2a3852,#212d43);color:#8fa4c2}
+  .legend{display:flex;gap:34px;margin-top:34px;font-size:21px;font-weight:700}
+  .dot{display:inline-block;width:20px;height:20px;border-radius:5px;vertical-align:-3px;margin-right:10px}
+  .cards{display:flex;gap:24px;margin-top:auto}
+  .card{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(127,176,255,.16);
+    border-radius:14px;padding:26px 28px}
+  .card .n{font-size:34px;font-weight:900;color:#7fb0ff}
+  .card .t{margin-top:8px;font-size:20px;font-weight:700}
+  .card .d{margin-top:6px;font-size:16px;color:#a9b7cc;line-height:1.5}
+</style></head><body>
+  <div class="stage">
+    <h1>字幕がある所は<span class="g">遅く</span>、ない所は<span class="g">速く</span>。</h1>
+    <div class="lead">公式字幕のタイミングから発話区間を検出し、区間ごとに再生速度を自動で切り替えます。<br>内容を理解したまま、大幅に時短できます。</div>
+
+    <div class="timeline">
+      <div class="tlabel">再生速度の自動切り替え（イメージ）</div>
+      <div class="bar">
+        <div class="seg speech" style="flex:2.2">1.5×</div>
+        <div class="seg silent" style="flex:3">4.0×</div>
+        <div class="seg speech" style="flex:2.6">1.5×</div>
+        <div class="seg silent" style="flex:1.8">4.0×</div>
+        <div class="seg speech" style="flex:2">1.5×</div>
+        <div class="seg silent" style="flex:2.4">4.0×</div>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:#3c78c8"></span>音声区間（字幕あり）＝理解できる速さ</span>
+        <span><span class="dot" style="background:#2a3852"></span>非音声区間（字幕なし）＝一気に飛ばす</span>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card"><div class="n">1.5×</div><div class="t">音声区間の速度</div><div class="d">セリフを追える速さ（お好みで調整可）</div></div>
+      <div class="card"><div class="n">4.0×</div><div class="t">非音声区間の速度</div><div class="d">効果音や間はまとめて短縮</div></div>
+      <div class="card"><div class="n">最大 -50%</div><div class="t">視聴時間を短縮</div><div class="d">圧縮率・残り時間を画面に表示</div></div>
+    </div>
+  </div>
+</body></html>
