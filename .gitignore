@@ -8,6 +8,8 @@ Thumbs.db
 .vscode/
 
 # Build outputs (公開ZIPはリリース時に生成するためリポジトリには入れない)
+# 提出用zipは dist/ に出力する(このフォルダごとgit管理対象外)
+dist/
 *.zip
 cinemagazer-*.zip
 
