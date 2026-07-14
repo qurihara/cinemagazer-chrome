@@ -25,10 +25,10 @@ async function load() {
   $('subtitleOffset').value = s.subtitleOffset ?? 0.0;
   $('overlayEnabled').checked = s.overlayEnabled !== false; // 既定 ON
   $('showHud').checked = s.showHud !== false;
-  $('enableNetflix').checked = s.enableNetflix !== false; // 既定 ON
-  $('enablePrime').checked = s.enablePrime === true;       // 既定 OFF
-  $('enableDisneyplus').checked = s.enableDisneyplus === true; // 既定 OFF
-  $('enableHulu').checked = s.enableHulu === true;             // 既定 OFF
+  $('enableNetflix').checked = s.enableNetflix !== false;       // 既定 ON
+  $('enableHulu').checked = s.enableHulu !== false;             // 既定 ON
+  $('enableDisneyplus').checked = s.enableDisneyplus !== false; // 既定 ON
+  $('enablePrime').checked = s.enablePrime !== false;           // 既定 ON（実験的）
   refreshOutputs();
 }
 

@@ -4,7 +4,7 @@
     "description": "拡張名。"
   },
   "extDescription": {
-    "message": "字幕情報から音声区間を抽出し、Netflix / Prime Video の再生速度を動的に切り替える Chrome 拡張です。",
+    "message": "字幕情報から音声区間を抽出し、動画配信サービスの再生速度を動的に切り替える Chrome 拡張です。Netflix / Hulu / Disney+ / Amazon Prime Video に対応。",
     "description": "ストアと chrome://extensions に表示される説明。"
   },
   "popupHeader": {
@@ -38,10 +38,10 @@
     "message": "Disney+で有効化"
   },
   "labelEnableHulu": {
-    "message": "Huluで有効化（実験的）"
+    "message": "Huluで有効化"
   },
   "footerText": {
-    "message": "Netflix / Prime Video の字幕情報から音声区間を抽出して動的に速度切替します"
+    "message": "動画の字幕情報から音声区間を抽出して動的に速度切替します"
   },
   "hudSpeech": {
     "message": "　音声"

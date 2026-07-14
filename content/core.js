@@ -14,11 +14,11 @@
       // 字幕の体感ズレを微調整 (秒, 正値=字幕を遅らせる, 負値=字幕を早める)
       subtitleOffset: 0.0,
       // サイト別の有効化トグル
+      // 対応サービスは既定ON（v0.3.9〜）。Prime のみ実験的。
       enableNetflix: true,
-      enablePrime: false,
-      // v0.3.x: 追加サービス（Disney+は動作確認済み、Huluは実験的）
-      enableDisneyplus: false,
-      enableHulu: false
+      enableHulu: true,
+      enableDisneyplus: true,
+      enablePrime: true
     },
     subtitleStores: new Map(),
     currentIntervals: [],

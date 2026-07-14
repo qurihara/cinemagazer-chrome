@@ -4,7 +4,7 @@
     "description": "Extension name."
   },
   "extDescription": {
-    "message": "Variable-rate viewing for Netflix / Prime Video, driven by subtitle timing.",
+    "message": "Variable-rate viewing driven by subtitle timing. Supports Netflix / Hulu / Disney+ / Amazon Prime Video.",
     "description": "Extension description shown in the Web Store and chrome://extensions."
   },
   "popupHeader": {
@@ -38,10 +38,10 @@
     "message": "Enable on Disney+"
   },
   "labelEnableHulu": {
-    "message": "Enable on Hulu (experimental)"
+    "message": "Enable on Hulu"
   },
   "footerText": {
-    "message": "Extracts speech intervals from Netflix / Prime Video subtitles and switches playback rate dynamically."
+    "message": "Extracts speech intervals from video subtitles and switches playback rate dynamically."
   },
   "hudSpeech": {
     "message": "   Speech"

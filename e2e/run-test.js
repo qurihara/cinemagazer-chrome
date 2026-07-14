@@ -125,6 +125,48 @@ async function runScenario(context, name, pagePath, urlParams, expect, extraChec
   return { name, checks, samples: samples.length, speechSamples: speechSamples.length, silenceSamples: silenceSamples.length, consoleLogs };
 }
 
+// 画像字幕 (Hulu/hulu.jp方式・image-presence) 検証用ランナー。
+// cue や中央オーバーレイのテキストは無い(字幕が画像)ため、runScenario の
+// cue/overlay チェックは使わず、字幕画像の表示/非表示に速度が追従するかだけを見る。
+async function runImageScenario(context, name, pagePath) {
+  const page = await context.newPage();
+  const consoleLogs = [];
+  page.on('console', msg => consoleLogs.push(msg.text()));
+  await page.goto(`http://localhost:${PORT}${pagePath}`);
+  await page.evaluate(() => document.querySelector('video')?.play().catch(() => {}));
+
+  const samples = [];
+  const deadline = Date.now() + 26000;
+  let shotSpeech = false, shotSilence = false;
+  fs.mkdirSync(SHOTS, { recursive: true });
+  while (Date.now() < deadline) {
+    const s = await samplePage(page);
+    samples.push(s);
+    if (!shotSpeech && isSpeechTime(s.t) && s.hudText) {
+      await page.screenshot({ path: path.join(SHOTS, `${name}-speech.png`) }); shotSpeech = true;
+    }
+    if (!shotSilence && isSilenceTime(s.t) && s.hudText) {
+      await page.screenshot({ path: path.join(SHOTS, `${name}-silence.png`) }); shotSilence = true;
+    }
+    if (shotSpeech && shotSilence && samples.length > 60) break;
+    await new Promise(r => setTimeout(r, 150));
+  }
+  await page.close();
+
+  const near = (a, b) => Math.abs(a - b) < 0.01;
+  const speechSamples = samples.filter(s => isSpeechTime(s.t) && !s.paused);
+  const silenceSamples = samples.filter(s => isSilenceTime(s.t) && !s.paused);
+  const checks = {
+    'アダプタ登録ログ (image-presence)': consoleLogs.some(l => l.includes('image-presence') || l.includes('adapter registered')),
+    'HUD表示': samples.some(s => s.hudText),
+    '字幕画像あり区間で 1.5x': speechSamples.some(s => near(s.rate, 1.5)),
+    '字幕画像なし区間で 4.0x': silenceSamples.some(s => near(s.rate, 4.0)),
+    'HUDに音声バッジ': samples.some(s => s.hudText && s.hudText.includes('音声')),
+    'JSエラーなし': !consoleLogs.some(l => /uncaught|TypeError|ReferenceError/i.test(l))
+  };
+  return { name, checks, samples: samples.length, speechSamples: speechSamples.length, silenceSamples: silenceSamples.length, consoleLogs };
+}
+
 (async () => {
   if (!fs.existsSync(DIST)) { console.error('dist-dev がありません。先に build-dev-ext.js を実行'); process.exit(1); }
   const server = await startServer();
@@ -163,6 +205,10 @@ async function runScenario(context, name, pagePath, urlParams, expect, extraChec
       'offsetが+1000で確定': logs.some(l => /segOffset locked: 1000\.0s/.test(l)),
       'フォールバックに落ちない': !logs.some(l => l.includes('fallback lock'))
     })));
+
+  // シナリオ5: 画像字幕 (Hulu/hulu.jp方式・image-presence): 字幕<img>のvisibilityを
+  //   DOM監視して発話区間を検出 → 字幕画像あり=1.5x / なし=4.0x に切替わることを検証。
+  results.push(await runImageScenario(context, 'image-subtitle', '/img/player.html'));
 
   await context.close();
   server.close();
