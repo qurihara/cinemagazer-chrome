@@ -30,28 +30,26 @@
 ```
 
 ### 詳細な説明（Description）
+> 現行ストア掲載文をベースに、対応サービス追加(Hulu/Disney+)とそれに伴う事実修正のみ加えたもの。文体・構成は現行のまま。
 ```
-CinemaGazer は、動画の「字幕がある区間（音声）」と「字幕がない区間（非音声/効果音のみ）」を自動判別し、それぞれに異なる再生速度を適用することで、内容理解を保ったまま動画を高速で鑑賞できるようにするChrome拡張です。
+CinemaGazer は、動画の「字幕がある区間（音声）」と「字幕がない区間（非音声/効果音のみ）」を自動判別し、それぞれに異なる再生速度を適用することで、内容理解を保ったまま異常なほど高速に動画を鑑賞できるようにするChrome拡張です。
 
-【特徴】
-- Netflix / Hulu / Disney+ / Amazon Prime Video の字幕タイミング情報を利用
-- 音声区間は「理解できる速さ」（既定 1.5×）、非音声区間は「飛ばせる速さ」（既定 4.0×）
-- 動画全体の圧縮率（何％の時間で見終わるか）を表示（サービスにより推定値）
-- 字幕の中央表示（視線移動を最小化、長時間視聴の疲労軽減）
-- Netflix では字幕を自動でON
-
-【背景】
-本拡張は、津田塾大学 栗原一貴 教授による WISS 2011 ベストペーパー
-"CinemaGazer: a System for Watching Video at Very High Speed" (arXiv:1110.0864)
-の手法を、現代のWebブラウザ環境で再現することを目的としています。
+【手短に説明！】
+・Netflix・Hulu・Disney+・Amazon Prime Videoを非常識なほど高速に動画鑑賞できる！たとえば30分もののアニメを10分以下で観るのも全然余裕！忙しい現代人に捧げます👍️
+・人間、物語を理解するときには　(1)セリフが理解できること　(2)物語の全てをちゃんと脳内に通過させること　が大切だと思うんだよね。だからAIに重要なシーンだけカットしてもらって要約する、なんてことはしない！セリフ（つまり字幕）があるところはそのセリフが理解できる速さで再生する。そしてセリフがないところは、ものすごい速さで再生する。それを自動的にやるのがこのCinemaGazer。
+・セリフを耳で聞きたいなら2.0倍くらいが限界かな。でも字幕を目で見て理解するのでよければ、もっと3~5倍とかでも大丈夫かもね。
+もともとある字幕情報を用いるから、鑑賞前にデータ処理する必要もない。軽量で待ち時間なし。サクサク使えるよ！
+・このくらいの極限的高速再生だと、字幕を読むために視線を動かすのはNG!画面中央に字幕を表示するから、ずっとぼーっと画面中央を眺めていればOK！
+ときどき字幕と映像がずれたり、へんな字幕が出たりするけど、そのときはブラウザを再読み込みしてね！
+・異常に高速再生するから、十分速いインターネット回線で使ってね！
+目まぐるしく情報が流れ込んでくるから、激しい点滅や目の疲れに注意してね！自己責任で使ってね！
 
 【動作環境】
 - Netflix (netflix.com)
 - Hulu (hulu.jp)
 - Disney+ (disneyplus.com)
-- Amazon Prime Video (primevideo.com / amazon.co.jp / amazon.com)
+- Amazon Prime Video (primevideo.com / amazon.co.jp / amazon.com) ※字幕同期がコンテンツ依存で不安定な場合があります（実験的）
 - 字幕がONになっているコンテンツ (Netflixでは自動ON)
-- ※Amazon Prime Video は字幕同期がコンテンツ依存で不安定な場合があります
 
 【プライバシー】
 本拡張は字幕タイミング情報をローカルでのみ処理し、外部サーバーへの送信や保存は一切行いません。
@@ -65,29 +63,37 @@ Speeds up video on Netflix / Hulu / Disney+ / Prime Video by switching playback 
 ```
 
 ### Detailed description
+> Based on the current live listing; only the supported-services additions (Hulu/Disney+) and the resulting factual fixes were applied. Voice and structure unchanged.
 ```
-CinemaGazer automatically distinguishes between parts of a video that have subtitles (speech) and parts that don't (non-speech / sound effects only), and applies a different playback rate to each — so you can watch at very high speed while still understanding the content.
+CinemaGazer is a Chrome extension that automatically distinguishes between video segments with subtitles (speech) and without subtitles (non-speech / sound effects only), and applies different playback speeds to each. This allows users to watch videos at extremely high speed while preserving comprehension.
 
-Features
-- Uses the subtitle timing of Netflix / Hulu / Disney+ / Amazon Prime Video
-- Speech parts play at a "speed you can follow" (default 1.5x); non-speech parts at a "skip-through speed" (default 4.0x)
-- Shows the overall compression ratio (how much of the runtime you'll spend); estimated on some services
-- Centered subtitle overlay (minimizes eye movement, reduces fatigue on long sessions)
-- Auto-enables subtitles on Netflix
+[Quick intro!]
+- Watch Netflix, Hulu, Disney+, and Amazon Prime Video at ridiculously high speeds! For example, you can easily finish a 30-minute anime episode in under 10 minutes. Dedicated to busy modern people 👍
+- I think the keys to understanding a story are: (1) being able to follow the dialogue, and (2) actually letting the entire story pass through your brain. So this tool does NOT use AI to "summarize the important scenes only" — instead, parts with dialogue (i.e. with subtitles) are played at a speed where you can still understand the speech, and parts without dialogue are played at an extremely high speed. CinemaGazer does this automatically.
+- If you want to listen to the dialogue, around 2.0× is the practical limit. But if you're fine with reading the subtitles, 3–5× should still work.
+- Because it uses the existing subtitle data, no preprocessing is needed before watching. Lightweight, no waiting time — snappy.
+- At these extreme speeds, moving your eyes down to read subtitles is too slow! CinemaGazer can show subtitles in the center of the screen so you can just stare at the middle and read.
+- Sometimes subtitles get out of sync, or odd subtitles slip through — when that happens, just reload the browser tab.
+- Because playback is unusually fast, please use a sufficiently fast Internet connection.
+- Information will fly at you. Please be mindful of rapid flashing and eye fatigue. Use at your own discretion.
 
-Background
-This extension reproduces, in the modern web browser, the method from the WISS 2011 best paper "CinemaGazer: a System for Watching Video at Very High Speed" (arXiv:1110.0864) by Prof. Kazutaka Kurihara (Tsuda University).
+[Features]
+- Utilizes subtitle timing from Netflix, Hulu, Disney+, and Amazon Prime Video
+- Plays speech segments at a “comprehensible speed” (default: 1.5×), and non-speech segments at a “skippable speed” (default: 4.0×)
+- Displays the overall compression rate (i.e., how much viewing time is reduced; estimated on some services)
+- Centers subtitles on the screen to minimize eye movement and reduce fatigue during long viewing sessions
+- Automatically enables subtitles on Netflix
 
-Supported
+[Supported Platforms]
 - Netflix (netflix.com)
 - Hulu (hulu.jp)
 - Disney+ (disneyplus.com)
-- Amazon Prime Video (primevideo.com / amazon.co.jp / amazon.com)
-- Content with subtitles turned on (auto on Netflix)
-- Note: On Amazon Prime Video, subtitle sync can be unstable depending on the title.
+- Amazon Prime Video (primevideo.com / amazon.co.jp / amazon.com) — subtitle sync can be unstable depending on the title (experimental)
+- Content with subtitles enabled (automatically enabled on Netflix)
 
-Privacy
-The extension processes subtitle timing locally only. It never sends or stores your data on external servers.
+[Privacy]
+This extension processes subtitle timing information locally only.
+No data is transmitted to or stored on external servers.
 ```
 
 ### Single purpose (English)
