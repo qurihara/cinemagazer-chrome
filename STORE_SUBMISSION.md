@@ -57,6 +57,61 @@ CinemaGazer は、動画の「字幕がある区間（音声）」と「字幕�
 本拡張は字幕タイミング情報をローカルでのみ処理し、外部サーバーへの送信や保存は一切行いません。
 ```
 
+## English store listing (英語ロケール掲載欄用)
+
+### Short description (Summary, <=132 chars)
+```
+Speeds up video on Netflix / Hulu / Disney+ / Prime Video by switching playback rate between subtitled and silent parts.
+```
+
+### Detailed description
+```
+CinemaGazer automatically distinguishes between parts of a video that have subtitles (speech) and parts that don't (non-speech / sound effects only), and applies a different playback rate to each — so you can watch at very high speed while still understanding the content.
+
+Features
+- Uses the subtitle timing of Netflix / Hulu / Disney+ / Amazon Prime Video
+- Speech parts play at a "speed you can follow" (default 1.5x); non-speech parts at a "skip-through speed" (default 4.0x)
+- Shows the overall compression ratio (how much of the runtime you'll spend); estimated on some services
+- Centered subtitle overlay (minimizes eye movement, reduces fatigue on long sessions)
+- Auto-enables subtitles on Netflix
+
+Background
+This extension reproduces, in the modern web browser, the method from the WISS 2011 best paper "CinemaGazer: a System for Watching Video at Very High Speed" (arXiv:1110.0864) by Prof. Kazutaka Kurihara (Tsuda University).
+
+Supported
+- Netflix (netflix.com)
+- Hulu (hulu.jp)
+- Disney+ (disneyplus.com)
+- Amazon Prime Video (primevideo.com / amazon.co.jp / amazon.com)
+- Content with subtitles turned on (auto on Netflix)
+- Note: On Amazon Prime Video, subtitle sync can be unstable depending on the title.
+
+Privacy
+The extension processes subtitle timing locally only. It never sends or stores your data on external servers.
+```
+
+### Single purpose (English)
+```
+Dynamically switch playback speed based on a video's subtitle timing to support high-speed viewing.
+```
+
+### Permission justification — storage (English)
+```
+Used to save user settings such as playback rates to chrome.storage.sync so they persist across browser sessions.
+```
+
+### Permission justification — host permissions (English)
+```
+Needed to read the subtitle (TTML/VTT) responses that the players of the supported streaming services (Netflix / Hulu / Disney+ / Amazon Prime Video) load — via fetch/XHR — or to observe the on-screen subtitle display, in order to extract subtitle interval timing. It never accesses the video frames themselves or any personal information. Extracted timing is used only in memory and is never transmitted or stored.
+```
+
+### Privacy policy URL (English listing)
+```
+https://github.com/qurihara/cinemagazer-chrome/blob/main/PRIVACY.en.md
+```
+
+## カテゴリ・言語
+
 ### カテゴリ
 - 「アクセシビリティ」または「動画」
 
