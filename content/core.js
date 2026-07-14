@@ -931,10 +931,19 @@
     if (STATE.domObserverActive) return;
     STATE.domObserverActive = true;
     const update = () => {
-      const text = readNativeSubtitleText();
-      if (text !== STATE.domSubtitleText) {
+      let text = '';
+      let inSpeech;
+      if (STATE.adapter && typeof STATE.adapter.isSubtitleImageVisible === 'function') {
+        // 画像字幕(Hulu等): 字幕がビットマップ画像なのでテキストは取れない。
+        // 字幕画像が表示されているかどうかだけで発話区間を判定する。
+        inSpeech = !!STATE.adapter.isSubtitleImageVisible();
+      } else {
+        text = readNativeSubtitleText();
+        inSpeech = !!text;
+      }
+      if (text !== STATE.domSubtitleText || inSpeech !== STATE.domSubtitleInSpeech) {
         STATE.domSubtitleText = text;
-        STATE.domSubtitleInSpeech = !!text;
+        STATE.domSubtitleInSpeech = inSpeech;
       }
     };
     // プレイヤーコンテナを subtree 監視。childList/characterData ともに見て字幕の更新を逃さない。
@@ -951,7 +960,14 @@
     const attachObserver = () => {
       const player = document.querySelector(playerSel) || document.body;
       const mo = new MutationObserver(update);
-      mo.observe(player, { childList: true, subtree: true, characterData: true });
+      const opts = { childList: true, subtree: true, characterData: true };
+      if (STATE.adapter && STATE.adapter.subtitleStrategy === 'image-presence') {
+        // 画像字幕(Hulu)は preload した <img> を visibility(style属性)で
+        // 表示/非表示するため、属性変化も監視して切替を即座に拾う。
+        opts.attributes = true;
+        opts.attributeFilter = ['style', 'class'];
+      }
+      mo.observe(player, opts);
       log('DOM subtitle observer attached');
     };
     if (document.querySelector(playerSel)) {
