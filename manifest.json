@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
   "author": "Kazutaka Kurihara (Tsuda University)",
@@ -17,9 +17,7 @@
     "*://*.disneyplus.com/*",
     "*://*.bamgrid.com/*",
     "*://*.hulu.com/*",
-    "*://*.hulu.jp/*",
-    "*://*.unext.jp/*",
-    "*://*.nxtv.jp/*"
+    "*://*.hulu.jp/*"
   ],
   "background": { "service_worker": "background.js" },
   "action": {
@@ -97,16 +95,6 @@
         "*://*.hulu.jp/*"
       ],
       "js": ["content/core.js", "content/hulu.js"],
-      "css": ["content/overlay.css"],
-      "run_at": "document_start",
-      "all_frames": false
-    },
-    {
-      "matches": [
-        "*://*.unext.jp/*",
-        "*://*.nxtv.jp/*"
-      ],
-      "js": ["content/core.js", "content/unext.js"],
       "css": ["content/overlay.css"],
       "run_at": "document_start",
       "all_frames": false

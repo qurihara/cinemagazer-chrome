@@ -1,4 +1,4 @@
-const FIELDS = ['enabled', 'speechRate', 'silentRate', 'silentMinGap', 'subtitleOffset', 'overlayEnabled', 'showHud', 'enableNetflix', 'enablePrime', 'enableDisneyplus', 'enableHulu', 'enableUnext'];
+const FIELDS = ['enabled', 'speechRate', 'silentRate', 'silentMinGap', 'subtitleOffset', 'overlayEnabled', 'showHud', 'enableNetflix', 'enablePrime', 'enableDisneyplus', 'enableHulu'];
 
 function $(id) { return document.getElementById(id); }
 
@@ -29,7 +29,6 @@ async function load() {
   $('enablePrime').checked = s.enablePrime === true;       // 既定 OFF
   $('enableDisneyplus').checked = s.enableDisneyplus === true; // 既定 OFF
   $('enableHulu').checked = s.enableHulu === true;             // 既定 OFF
-  $('enableUnext').checked = s.enableUnext === true;           // 既定 OFF
   refreshOutputs();
 }
 
@@ -53,8 +52,7 @@ async function save() {
     enableNetflix: $('enableNetflix').checked,
     enablePrime: $('enablePrime').checked,
     enableDisneyplus: $('enableDisneyplus').checked,
-    enableHulu: $('enableHulu').checked,
-    enableUnext: $('enableUnext').checked
+    enableHulu: $('enableHulu').checked
   };
   await chrome.storage.sync.set(settings);
   // chrome.storage.onChanged が content script 側で発火するので ブロードキャストは任意

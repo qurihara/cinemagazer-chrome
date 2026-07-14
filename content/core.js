@@ -16,10 +16,9 @@
       // サイト別の有効化トグル
       enableNetflix: true,
       enablePrime: false,
-      // v0.3.x: 実験的サイト
+      // v0.3.x: 追加サービス（Disney+は動作確認済み、Huluは実験的）
       enableDisneyplus: false,
-      enableHulu: false,
-      enableUnext: false
+      enableHulu: false
     },
     subtitleStores: new Map(),
     currentIntervals: [],
@@ -185,8 +184,7 @@
     netflix:    'enableNetflix',
     prime:      'enablePrime',
     disneyplus: 'enableDisneyplus',
-    hulu:       'enableHulu',
-    unext:      'enableUnext'
+    hulu:       'enableHulu'
   };
   function isSiteEnabled(name) {
     if (!name) return false;
@@ -913,9 +911,6 @@
     '.caption-text-box',
     '[data-automationid*="captions"]',
     '[data-automationid*="subtitle"]',
-    // U-NEXT
-    '[class*="subtitle-text"]',
-    '[class*="SubtitleText"]',
     // 汎用フォールバック
     '[class*="captions-overlay"]',
     '[class*="captionsOverlay"]',
@@ -951,9 +946,7 @@
       // Disney+
       '.btm-media-client-element', '.btm-media-overlays-container',
       // Hulu
-      '.PlayerContainer', '.controls__player-container', '[data-testid="player-container"]',
-      // U-NEXT
-      '[class*="PlayerWrap"]', '[class*="player-wrapper"]'
+      '.PlayerContainer', '.controls__player-container', '[data-testid="player-container"]'
     ].join(', ');
     const attachObserver = () => {
       const player = document.querySelector(playerSel) || document.body;
@@ -1027,7 +1020,7 @@
   //
   // 利点:
   //   - cue が「メディア時刻」で得られる（ブラウザが DAI 広告挿入分をオフセット済み）
-  //   - XHR で字幕URLを捕まえなくても動く → Disney+/Hulu/U-NEXT に有効
+  //   - XHR で字幕URLを捕まえなくても動く → Disney+/Hulu に有効
   //   - Prime Video の広告ズレ問題への根本解決策
   //
   // 採用条件:

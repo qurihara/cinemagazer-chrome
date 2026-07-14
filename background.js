@@ -13,10 +13,9 @@ const DEFAULTS = {
   subtitleOffset: 0.0, // 字幕の体感ズレを微調整（秒, +で字幕を遅らせる）
   enableNetflix: true,    // Netflix で本拡張を有効化
   enablePrime: false,     // Prime Video（既定OFF: 字幕同期がコンテンツ依存で不安定なため）
-  // v0.3.x: 追加サービス（いずれも既定OFFの実験的サポート）
+  // v0.3.x: 追加サービス（既定OFF。Disney+は動作確認済み、Huluは実験的）
   enableDisneyplus: false, // Disney+
-  enableHulu: false,       // Hulu (US/JP)
-  enableUnext: false       // U-NEXT
+  enableHulu: false        // Hulu (US/JP)
 };
 
 // schemaVersion: マイグレーション一度だけ走らせるためのフラグ
