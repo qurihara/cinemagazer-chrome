@@ -53,7 +53,16 @@
     adActive: false,
     // DAI(動的広告挿入)対策: 広告で進んだ currentTime 量(本編外)を積算し cue照合で差し引く
     adTimeOffset: 0,
-    adLastTime: -1
+    adLastTime: -1,
+    // xhr-segmented(Disney+等)のレジューム再生対策:
+    // 続きから再生では video.currentTime がレジューム地点=0 の相対時刻になるが、
+    // 字幕cueは作品先頭=0 の絶対時刻。両者の差(=segOffset秒)を、メディアセグメントURLの
+    // pts(90kHz絶対時刻) と video.buffered 末尾(currentTime空間)の対応から推定する。
+    //   cue絶対時刻 = video.currentTime + segOffset
+    segOffset: 0,
+    sawTso: false,          // MSE timestampOffset を一度でも観測したか(=MSE再生中か)
+    segOffsetLocked: false,
+    segFirstPlayAt: 0
   };
 
   const log  = (...a) => console.log('%c[CinemaGazer]', 'color:#c33;font-weight:bold', ...a);
@@ -249,6 +258,8 @@
     if (!d || d.__cg !== true) return;
     if (d.type === 'CG_SUBTITLE') {
       handleSubtitle(d.url, d.body);
+    } else if (d.type === 'CG_MEDIA_TSO') {
+      recordTimestampOffset(d.tso);
     } else if (d.type === 'CG_INTERCEPTOR_READY') {
       STATE.interceptorReady = true;
       log('interceptor ready');
@@ -340,6 +351,52 @@
     STATE.compressionCache.settingsHash = '';
     STATE.lastSubtitleHandledAt = Date.now();
     log('subtitle segment merged: +' + added + ' cues (total ' + existing.length + ')  url=' + url.slice(0, 80));
+  }
+
+  // MSE の timestampOffset から segOffset を確定する(推定でなく厳密)。
+  //   presentation(currentTime) = internal(cue絶対時刻) + timestampOffset
+  //   ⇒ cue絶対時刻 = currentTime - timestampOffset,  segOffset = -timestampOffset
+  // xhr-segmented のレジューム再生でcueがズレる問題の本命補正。cue範囲との整合で検証。
+  function recordTimestampOffset(tso) {
+    if (!(STATE.adapter && STATE.adapter.subtitleStrategy === 'xhr-segmented')) return;
+    if (typeof tso !== 'number' || !isFinite(tso)) return;
+    STATE.sawTso = true; // MSE再生中と確定 → offset=0フォールバックには落とさない
+    const offset = -tso;
+    if (STATE.segOffsetLocked && Math.abs(offset - STATE.segOffset) < 0.5) return; // 変化なし
+    if (!isSegOffsetPlausible(offset)) return; // cueと整合しない値は弾く(念のため)
+    const changed = !STATE.segOffsetLocked || Math.abs(offset - STATE.segOffset) >= 0.5;
+    STATE.segOffset = offset;
+    STATE.segOffsetLocked = true;
+    if (changed) {
+      STATE.currentIntervalIdx = -1; // オフセット変化 → cue探索位置をリセット
+      log('segOffset locked: ' + offset.toFixed(1) + 's (from MSE timestampOffset, resume-aware)');
+    }
+  }
+
+  // 補正後の再生位置が読み込み済みcue範囲の近傍に入るか(=timestampOffset解釈の妥当性)。
+  // cue未取得時は検証不能だが厳密値なので暫定的に受理する。
+  function isSegOffsetPlausible(offset) {
+    const v = STATE.video;
+    const arr = STATE.currentIntervals;
+    if (!v || !arr.length) return true;
+    const now = v.currentTime + offset;
+    return now >= arr[0][0] - 600 && now <= arr[arr.length - 1][1] + 600;
+  }
+
+  // MSE timestampOffset が観測できないケース(currentTimeが絶対時刻のHTML5プログレッシブ
+  // 動画・非MSEサイト・e2eモック等)のフォールバック: 再生開始から一定時間 timestampOffset が
+  // 一度も来なければ offset=0 で確定する(=currentTimeが絶対時刻とみなす)。
+  // Disney+のレジューム再生では最初のappendBufferで速やかに届くため、この分岐には落ちない。
+  function maybeFallbackLockSegOffset(t) {
+    if (STATE.segOffsetLocked) return;
+    if (!(t > 0)) return; // 再生開始前
+    if (!STATE.segFirstPlayAt) STATE.segFirstPlayAt = performance.now();
+    if (STATE.sawTso) return; // MSE再生中 → timestampOffset確定に委ねる(0に倒さない)
+    if (performance.now() - STATE.segFirstPlayAt > 6000) {
+      STATE.segOffset = 0;
+      STATE.segOffsetLocked = true;
+      log('segOffset fallback lock: 0s (no MSE timestampOffset observed; assuming absolute currentTime)');
+    }
   }
 
   // TTML2 のパラメータ名前空間
@@ -652,20 +709,29 @@
     // texttrack由来はブラウザがメディア時刻(広告込み)で提供するので差し引かない。
     const adOff = (STATE.intervalSource === 'xhr') ? STATE.adTimeOffset : 0;
     const t = v.currentTime;
-    const tCue = t - off - adOff;
+    const isSegmented = STATE.adapter && STATE.adapter.subtitleStrategy === 'xhr-segmented';
+    // xhr-segmented はレジューム再生でcue(絶対時刻)とcurrentTime(相対)がズレるため
+    // segOffsetで補正する。確定前のフォールバック処理もここで行う。
+    if (isSegmented) maybeFallbackLockSegOffset(t);
+    const segOff = (isSegmented && STATE.segOffsetLocked) ? STATE.segOffset : 0;
+    const tCue = t + segOff - off - adOff;
     let inSpeech = false;
     let usedDomFallback = false;
-    const isSegmented = STATE.adapter && STATE.adapter.subtitleStrategy === 'xhr-segmented';
     if (STATE.currentIntervals.length) {
-      const idx = findCueAt(tCue);
-      inSpeech = (idx >= 0);
-      // xhr-segmented (Disney+等): cue はマージ済み範囲しか無い。範囲外(未取得区間)を
-      // 「無音」と断定すると 4x で字幕バッファを追い越して暴走する(会話も高速再生・
-      // エピソードを走り切る)ため、カバレッジ外は音声扱い(speechRate)に倒す。
-      if (!inSpeech && isSegmented) {
-        const first = STATE.currentIntervals[0];
-        const last = STATE.currentIntervals[STATE.currentIntervals.length - 1];
-        if (tCue > last[1] || tCue < first[0] - 30) inSpeech = true;
+      if (isSegmented && !STATE.segOffsetLocked) {
+        // オフセット未確定中は等速側(安全)。誤ったcue照合で4x暴走させない。
+        inSpeech = true;
+      } else {
+        const idx = findCueAt(tCue);
+        inSpeech = (idx >= 0);
+        // xhr-segmented (Disney+等): cue はマージ済み範囲しか無い。範囲外(未取得区間)を
+        // 「無音」と断定すると 4x で字幕バッファを追い越して暴走する(会話も高速再生・
+        // エピソードを走り切る)ため、カバレッジ外は音声扱い(speechRate)に倒す。
+        if (!inSpeech && isSegmented) {
+          const first = STATE.currentIntervals[0];
+          const last = STATE.currentIntervals[STATE.currentIntervals.length - 1];
+          if (tCue > last[1] || tCue < first[0] - 30) inSpeech = true;
+        }
       }
     } else if (STATE.domObserverActive && !isSegmented) {
       // フォールバック: ネイティブ字幕DOMの観察結果を使う。
@@ -745,7 +811,14 @@
       const ratio = computeCompressionRatio();
       // tail: 圧縮率（XHRモード時のみ計算可）/ 状態（DOMモードは省略 = 動作中で表示なし）
       let tail = '';
-      if (ratio != null) {
+      // xhr-segmented のレジューム同期状態を優先表示(A: 安全ガードの可視化)
+      if (isSegmented && cueCount > 0 && !STATE.segOffsetLocked) {
+        // 再生開始直後の短い同期待ち / 長引く場合は同期不可(=最初から再生を促す)
+        const playedMs = STATE.segFirstPlayAt ? (performance.now() - STATE.segFirstPlayAt) : 0;
+        tail = (playedMs > 25000)
+          ? i18n('hudSyncFailed', '同期不可(最初から再生)')
+          : i18n('hudSyncing', '同期中…');
+      } else if (ratio != null) {
         const pct = Math.round((1 - ratio) * 100);
         // 圧縮率は0–99% (時に100%超もありうるが稀)。3桁分の幅で固定。
         tail = padLeftFig(pct, 3) + i18n('hudCompressedSuffix', '% 圧縮');
@@ -904,6 +977,51 @@
     setInterval(update, 200);
   }
 
+  // Disney+(hive)のネイティブ字幕は open shadow DOM(<timed-text-override-region>)内に
+  // 描画されるため、コンテンツスクリプトのCSS(html.cg-overlay-active ...)が届かない。
+  // shadowRoot内に直接 hiding style を注入して中央オーバーレイと二重表示にならないようにする。
+  // overlayEnabled=false(中央表示OFF)のときは注入を外してネイティブを表示に戻す。
+  let cgNativeShadowRoot = null;
+  function findNativeSubtitleShadowRoot() {
+    if (cgNativeShadowRoot && cgNativeShadowRoot.host && cgNativeShadowRoot.host.isConnected) {
+      return cgNativeShadowRoot;
+    }
+    cgNativeShadowRoot = null;
+    // 主経路: hiveのカスタム要素タグから(安価)
+    const host = document.querySelector('timed-text-override-region');
+    if (host && host.shadowRoot &&
+        host.shadowRoot.querySelector('.hive-subtitle-renderer-wrapper, .hive-subtitle-renderer-cue-window')) {
+      cgNativeShadowRoot = host.shadowRoot;
+      return cgNativeShadowRoot;
+    }
+    // フォールバック: 全要素走査(タグ名変更に備える)
+    const all = document.querySelectorAll('*');
+    for (let i = 0; i < all.length; i++) {
+      const sr = all[i].shadowRoot;
+      if (sr && sr.querySelector('.hive-subtitle-renderer-wrapper, .hive-subtitle-renderer-cue-window')) {
+        cgNativeShadowRoot = sr;
+        return sr;
+      }
+    }
+    return null;
+  }
+  function applyNativeShadowSubtitleHiding() {
+    // hiveネイティブ字幕を隠すのは中央オーバーレイを出す非Netflix(Disney等)のみ
+    if (!STATE.adapter || STATE.adapter.name === 'netflix') return;
+    const sr = findNativeSubtitleShadowRoot();
+    if (!sr) return;
+    const want = !!STATE.settings.overlayEnabled;
+    let st = sr.getElementById('cg-hide-native');
+    if (want && !st) {
+      st = document.createElement('style');
+      st.id = 'cg-hide-native';
+      st.textContent = '.hive-subtitle-renderer-wrapper,.hive-subtitle-renderer-cue-window,.hive-subtitle-renderer-cue{display:none!important;visibility:hidden!important}';
+      sr.appendChild(st);
+    } else if (!want && st) {
+      st.remove();
+    }
+  }
+
   // ====================================================================
   // TextTrack 観察: <video>.textTracks の cue を currentIntervals に流し込む。
   //
@@ -1019,6 +1137,11 @@
         STATE.pendingIntervalsUrl = '';
         STATE.currentIntervalIdx = -1;
         STATE.compressionCache = { duration: 0, cueCount: 0, settingsHash: '', ratio: null };
+        // 新エピソード/メディアはタイムラインが別 → segOffsetを再確定させる
+        STATE.segOffset = 0;
+        STATE.sawTso = false;
+        STATE.segOffsetLocked = false;
+        STATE.segFirstPlayAt = 0;
         hideOverlay();
       };
       const _onMedia = function () { _resetAdOff(); _resetSubs(); };
@@ -1033,6 +1156,10 @@
     ensureHud();
     ensureOverlay();
     startSubtitleDOMObserver();
+    if (STATE.adapter && STATE.adapter.subtitleStrategy === 'xhr-segmented') {
+      // Disney+(hive)のネイティブ字幕を shadow DOM 内で隠す(500ms間隔で再アサート)
+      if (!STATE.nativeHideTimer) STATE.nativeHideTimer = setInterval(applyNativeShadowSubtitleHiding, 500);
+    }
     if (STATE.adapter && STATE.adapter.subtitleStrategy === 'texttrack-preferred') {
       startTextTrackObserver(v);
     }

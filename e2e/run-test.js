@@ -145,11 +145,23 @@ async function runScenario(context, name, pagePath, urlParams, expect, extraChec
   results.push(await runScenario(context, 'default', '/player.html', '', { ss: 1.5, ns: 4.0 }));
   // シナリオ2: URLパラメータ設定共有 (?ss=2.0&ns=8.0)
   results.push(await runScenario(context, 'url-override', '/player.html', '?ss=2.0&ns=8.0', { ss: 2.0, ns: 8.0 }));
-  // シナリオ3: セグメント化WebVTT (Disney+方式): XHR捕捉→マージ→cue基準表示
+  // シナリオ3: セグメント化WebVTT (Disney+方式・頭から/非MSE): XHR捕捉→マージ→
+  //   timestampOffsetが来ない → offset=0フォールバックで確定 → cue基準表示
   results.push(await runScenario(context, 'segmented-vtt', '/seg/player.html', '', { ss: 1.5, ns: 4.0 },
     (logs) => ({
       'セグメントマージ×2 (逐次到着)': logs.filter(l => l.includes('subtitle segment merged')).length >= 2,
-      'interceptor捕捉 (page world)': logs.some(l => l.includes('interceptor loaded'))
+      'interceptor捕捉 (page world)': logs.some(l => l.includes('interceptor loaded')),
+      'offset=0フォールバックで確定': logs.some(l => l.includes('fallback lock'))
+    })));
+  // シナリオ4: レジューム再生 (timestampOffset=-1000): cueは絶対時刻1001-1008、
+  //   currentTimeは0-10相対。segOffset=+1000補正でcue整合し速度切替が起きることを検証。
+  //   補正が無ければ 4x(無音)もオーバーレイも出ない = この検証が補正の証拠。
+  results.push(await runScenario(context, 'segmented-resume', '/seg/player-resume.html', '', { ss: 1.5, ns: 4.0 },
+    (logs) => ({
+      'セグメントマージ×2 (逐次到着)': logs.filter(l => l.includes('subtitle segment merged')).length >= 2,
+      'segOffsetをtimestampOffsetから確定': logs.some(l => l.includes('from MSE timestampOffset')),
+      'offsetが+1000で確定': logs.some(l => /segOffset locked: 1000\.0s/.test(l)),
+      'フォールバックに落ちない': !logs.some(l => l.includes('fallback lock'))
     })));
 
   await context.close();

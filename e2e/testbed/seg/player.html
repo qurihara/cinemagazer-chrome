@@ -16,6 +16,8 @@
 </video>
 <div id="info">segmented-VTT test: seg1.vtt即時 + seg2.vttを3秒後にXHR取得。マージ→速度切替→cue基準の中央表示を確認。</div>
 <script>
+  // このシナリオは「頭から再生 / 非MSEプログレッシブ動画」= timestampOffsetが来ないケース。
+  // segOffsetは6秒後に offset=0 のフォールバックで確定する(currentTime=絶対時刻)。
   var v = document.getElementById('v');
   v.addEventListener('canplay', function(){ v.play().catch(function(){}); });
   function fetchVtt(u){ var x = new XMLHttpRequest(); x.open('GET', u); x.send(); }

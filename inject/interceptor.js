@@ -65,6 +65,31 @@
     }
   }
 
+  // MSE の timestampOffset を content script へ通知する(レジューム同期の要)。
+  // Disney+等は「続きから」再生で video.currentTime を レジューム地点=0 の相対時刻にし、
+  // SourceBuffer.timestampOffset に -(レジューム絶対時刻) を設定する:
+  //   presentation(currentTime) = internal(字幕cueの絶対時刻) + timestampOffset
+  //   ⇒ cue絶対時刻 = currentTime - timestampOffset
+  // メディアfetchはWorker内でもSourceBuffer.appendBufferは主スレッドで呼ばれるため、
+  // ここで timestampOffset を確定的(推定でなく厳密)に読める。
+  (function hookMediaTimestampOffset() {
+    try {
+      if (typeof SourceBuffer === 'undefined' || !SourceBuffer.prototype.appendBuffer) return;
+      const AB = SourceBuffer.prototype.appendBuffer;
+      let lastPosted = null;
+      SourceBuffer.prototype.appendBuffer = function (data) {
+        try {
+          const to = this.timestampOffset;
+          if (typeof to === 'number' && isFinite(to) && to !== lastPosted) {
+            lastPosted = to;
+            window.postMessage({ __cg: true, type: 'CG_MEDIA_TSO', tso: to }, '*');
+          }
+        } catch (e) { /* noop */ }
+        return AB.apply(this, arguments);
+      };
+    } catch (e) { /* noop */ }
+  })();
+
   // ---- fetch hook ----
   const origFetch = window.fetch;
   window.fetch = function (input, init) {

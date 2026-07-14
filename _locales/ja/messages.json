@@ -58,6 +58,12 @@
   "hudNotCaptured": {
     "message": "字幕未取得"
   },
+  "hudSyncing": {
+    "message": "同期中…"
+  },
+  "hudSyncFailed": {
+    "message": "同期不可(最初から再生)"
+  },
   "hudClickHint": {
     "message": "クリックでCinemaGazer設定を開く"
   },

@@ -58,6 +58,12 @@
   "hudNotCaptured": {
     "message": "no subtitles"
   },
+  "hudSyncing": {
+    "message": "syncing…"
+  },
+  "hudSyncFailed": {
+    "message": "no sync (restart from beginning)"
+  },
   "hudClickHint": {
     "message": "Click to open CinemaGazer settings"
   },
