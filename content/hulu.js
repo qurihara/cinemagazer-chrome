@@ -39,14 +39,17 @@
     return vids[0];
   }
 
-  // 字幕画像 (happyon.jp のビットマップ) が現在表示されているか。
+  // 現在表示されている字幕画像 (happyon.jp のビットマップ) の <img> を列挙する。
   // 動画幅に近い横長・動画下部・visibility:visible の <img> を字幕とみなす。
-  function isSubtitleImageVisible() {
+  // 判定は visibility/opacity/display のみで、clip-path(中央表示時の隠し)には触れない
+  // ため、隠しても検出は安定する。
+  function subtitleImages() {
     try {
       const v = findVideo();
-      if (!v) return false;
+      if (!v) return [];
       const vr = v.getBoundingClientRect();
-      if (!vr.width || !vr.height) return false;
+      if (!vr.width || !vr.height) return [];
+      const out = [];
       const imgs = document.querySelectorAll('img');
       for (let i = 0; i < imgs.length; i++) {
         const img = imgs[i];
@@ -58,19 +61,39 @@
         if (r.bottom > vr.bottom + 80) continue;            // 動画外の要素を除外
         const cs = getComputedStyle(img);
         if (cs.visibility === 'visible' && cs.display !== 'none' && parseFloat(cs.opacity || '1') > 0.1) {
-          return true;
+          out.push(img);
         }
       }
-      return false;
+      return out;
     } catch (e) {
-      return false;
+      return [];
     }
+  }
+
+  function isSubtitleImageVisible() {
+    return subtitleImages().length > 0;
+  }
+
+  // 中央表示OFF時に、clip-path で隠したネイティブ字幕画像を元に戻す。
+  function restoreNativeSubtitles() {
+    try {
+      const imgs = document.querySelectorAll('img');
+      for (let i = 0; i < imgs.length; i++) {
+        const src = imgs[i].currentSrc || imgs[i].src || '';
+        if (/happyon\.jp/i.test(src)) {
+          imgs[i].style.removeProperty('clip-path');
+          imgs[i].style.removeProperty('-webkit-clip-path');
+        }
+      }
+    } catch (e) {}
   }
 
   window.CinemaGazer.registerAdapter({
     name: 'hulu',
     findVideo,
     subtitleStrategy: 'image-presence',
-    isSubtitleImageVisible
+    isSubtitleImageVisible,
+    getSubtitleImages: subtitleImages,
+    restoreNativeSubtitles
   });
 })();

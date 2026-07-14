@@ -33,6 +33,7 @@
     overlayEl: null,
     hudEl: null,
     lastShownText: '',
+    lastShownImgSrc: '',
     lastShownAt: 0,
     interceptorReady: false,
     compressionCache: { duration: 0, cueCount: 0, settingsHash: '', ratio: null },
@@ -796,6 +797,7 @@
       STATE.estAccum.lastT = nowT;
     }
 
+    const isImagePresence = STATE.adapter && STATE.adapter.subtitleStrategy === 'image-presence';
     if (STATE.settings.overlayEnabled) {
       // Prime等(非Netflix)は DAI広告offsetの残差で XHR cue の照合時刻がズレることがある。
       // ネイティブ字幕DOMは常に正しい時刻なので、中央表示はそれに合わせる
@@ -806,7 +808,21 @@
       const preferNativeText =
         STATE.adapter && STATE.adapter.name !== 'netflix' && STATE.domObserverActive
         && STATE.adapter.subtitleStrategy !== 'xhr-segmented';
-      if (preferNativeText) {
+      if (isImagePresence) {
+        // 画像字幕(Hulu): 表示中の字幕画像を中央に複製表示し、ネイティブ(下部)を隠す。
+        // 隠すのは clip-path (検出条件の visibility/opacity/display には触らない=検出が安定)。
+        const subImgs = STATE.adapter.getSubtitleImages ? STATE.adapter.getSubtitleImages() : [];
+        if (subImgs.length) {
+          const im = subImgs[0];
+          for (const x of subImgs) {
+            x.style.setProperty('clip-path', 'inset(100%)', 'important');
+            x.style.setProperty('-webkit-clip-path', 'inset(100%)', 'important');
+          }
+          showOverlayImage(im.currentSrc || im.src, im.getBoundingClientRect().width);
+        } else {
+          hideOverlay();
+        }
+      } else if (preferNativeText) {
         if (STATE.domSubtitleText) showOverlay(STATE.domSubtitleText);
         else hideOverlay();
       } else if (STATE.currentIntervals.length) {
@@ -822,6 +838,8 @@
       }
     } else if (STATE.overlayEl) {
       hideOverlay();
+      // 中央表示OFF時は画像字幕のネイティブ隠し(clip-path)を解除して下部表示に戻す。
+      if (isImagePresence && STATE.adapter.restoreNativeSubtitles) STATE.adapter.restoreNativeSubtitles();
     }
 
     if (STATE.hudEl) {
@@ -1368,8 +1386,29 @@
     ensureOverlay();
     positionOverlayAtVideoCenter();
     if (text !== STATE.lastShownText) {
-      STATE.overlayEl.textContent = text;
+      STATE.overlayEl.textContent = text; // 画像モードの子要素があれば置換される
       STATE.lastShownText = text;
+      STATE.lastShownImgSrc = '';
+      STATE.lastShownAt = performance.now();
+    }
+    STATE.overlayEl.style.transition = 'opacity ' + STATE.settings.overlayFadeMs + 'ms linear';
+    STATE.overlayEl.style.opacity = '1';
+  }
+  // 画像字幕(Hulu)向け: 字幕ビットマップ画像を中央オーバーレイに複製表示する。
+  function showOverlayImage(src, width) {
+    if (!STATE.overlayEl || !src) return;
+    ensureOverlay();
+    positionOverlayAtVideoCenter();
+    if (src !== STATE.lastShownImgSrc) {
+      const img = document.createElement('img');
+      img.src = src;
+      img.style.display = 'block';
+      img.style.width = Math.round(width) + 'px';
+      img.style.maxWidth = '100%';
+      STATE.overlayEl.textContent = '';   // 既存テキスト/画像をクリア
+      STATE.overlayEl.appendChild(img);
+      STATE.lastShownImgSrc = src;
+      STATE.lastShownText = '';
       STATE.lastShownAt = performance.now();
     }
     STATE.overlayEl.style.transition = 'opacity ' + STATE.settings.overlayFadeMs + 'ms linear';
@@ -1380,6 +1419,7 @@
     STATE.overlayEl.style.transition = 'opacity ' + STATE.settings.overlayFadeMs + 'ms linear';
     STATE.overlayEl.style.opacity = '0';
     STATE.lastShownText = '';
+    STATE.lastShownImgSrc = '';
   }
   document.addEventListener('fullscreenchange', () => { ensureOverlay(); ensureHud(); });
   document.addEventListener('webkitfullscreenchange', () => { ensureOverlay(); ensureHud(); });

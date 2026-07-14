@@ -71,12 +71,17 @@ async function samplePage(page) {
       const cs = getComputedStyle(el);
       return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getClientRects().length > 0;
     };
+    const ovImg = ov ? ov.querySelector('img') : null;
+    const nativeSub = document.querySelector('img[data-cg-testsub]');
     return {
       t: v ? v.currentTime : -1,
       rate: v ? v.playbackRate : -1,
       paused: v ? v.paused : true,
       hudText: visible(hud) ? hud.textContent.trim() : null,
-      overlayText: (ov && ov.style.display !== 'none') ? ov.textContent.trim() : null
+      overlayText: (ov && ov.style.display !== 'none') ? ov.textContent.trim() : null,
+      // 画像字幕(Hulu)向け: 中央オーバーレイに字幕画像が出ているか / ネイティブがclip-pathで隠れているか
+      overlayHasImg: !!(ovImg && ov.style.display !== 'none' && ov.style.opacity !== '0'),
+      nativeClipped: nativeSub ? (getComputedStyle(nativeSub).clipPath !== 'none') : null
     };
   });
 }
@@ -164,6 +169,8 @@ async function runImageScenario(context, name, pagePath) {
     '字幕画像なし区間で 4.0x': silenceSamples.some(s => near(s.rate, 4.0)),
     'HUDに音声バッジ': samples.some(s => s.hudText && s.hudText.includes('音声')),
     'HUDに推定圧縮率(~% 圧縮)': samples.some(s => s.hudText && s.hudText.includes('圧縮')),
+    '字幕画像あり区間で中央に字幕画像を表示': speechSamples.some(s => s.overlayHasImg),
+    '中央表示中はネイティブ字幕をclip-pathで隠す': speechSamples.some(s => s.overlayHasImg && s.nativeClipped),
     'JSエラーなし': !consoleLogs.some(l => /uncaught|TypeError|ReferenceError/i.test(l))
   };
   return { name, checks, samples: samples.length, speechSamples: speechSamples.length, silenceSamples: silenceSamples.length, consoleLogs };
