@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
   "author": "Kazutaka Kurihara (Tsuda University)",
@@ -55,6 +55,13 @@
       "js": ["inject/interceptor.js"],
       "run_at": "document_start",
       "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": ["*://*.disneyplus.com/*"],
+      "js": ["inject/interceptor.js"],
+      "run_at": "document_start",
+      "all_frames": false,
       "world": "MAIN"
     },
     {
@@ -112,7 +119,8 @@
         "*://*.netflix.com/*",
         "*://*.primevideo.com/*",
         "*://*.amazon.co.jp/*",
-        "*://*.amazon.com/*"
+        "*://*.amazon.com/*",
+        "*://*.disneyplus.com/*"
       ]
     }
   ]

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CinemaGazer segmented-VTT test</title>
+<style>html,body{margin:0;background:#000;color:#ccc;font-family:sans-serif}
+ video{width:100%;height:auto;display:block}
+ #info{padding:8px;font-size:13px}</style>
+</head>
+<body>
+<!-- Disney+方式の模擬: 字幕は<track>でなくXHRのセグメント化WebVTTで配信され、
+     interceptor(MAIN world)が捕捉 → core.jsがマージする -->
+<video id="v" autoplay muted playsinline controls loop>
+  <source src="../sample.mp4" type="video/mp4">
+</video>
+<div id="info">segmented-VTT test: seg1.vtt即時 + seg2.vttを3秒後にXHR取得。マージ→速度切替→cue基準の中央表示を確認。</div>
+<script>
+  var v = document.getElementById('v');
+  v.addEventListener('canplay', function(){ v.play().catch(function(){}); });
+  function fetchVtt(u){ var x = new XMLHttpRequest(); x.open('GET', u); x.send(); }
+  fetchVtt('seg1.vtt');
+  setTimeout(function(){ fetchVtt('seg2.vtt'); }, 3000);
+</script>
+</body>
+</html>

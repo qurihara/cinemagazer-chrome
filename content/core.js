@@ -111,6 +111,9 @@
   function computeCompressionRatio() {
     const v = STATE.video;
     const arr = STATE.currentIntervals;
+    // xhr-segmented (Disney+等) は再生位置周辺のcueしか手元に無く、全編の圧縮率は
+    // 計算できない(部分cueで計算すると大幅に過大評価する)ため表示しない。
+    if (STATE.adapter && STATE.adapter.subtitleStrategy === 'xhr-segmented') return null;
     if (!v || !v.duration || !isFinite(v.duration) || arr.length === 0) return null;
     const D = v.duration;
     const sr = STATE.settings.speechRate;
@@ -286,6 +289,16 @@
       warn('subtitle last_end (' + l[1].toFixed(1) + 's) >> video.duration ('
            + v.duration.toFixed(1) + 's). tickRate/frameRate 解釈ミスの可能性。');
     }
+    // セグメント配信サイト (Disney+ 等): HLS の WebVTT を再生位置周辺の範囲単位で
+    // 配信してくる。cue 時刻は絶対時刻 (X-TIMESTAMP-MAP なし) なので、断片を
+    // currentIntervals へ逐次マージする。pending 保留 (Netflix の次エピソード
+    // 先読み対策) はセグメント配信では誤動作するため通さない。
+    // 制約: プレイヤー内で字幕言語を切り替えると新旧言語の cue が混在しうる
+    // (シーク or リロードで解消)。
+    if (STATE.adapter && STATE.adapter.subtitleStrategy === 'xhr-segmented') {
+      mergeSegmentedIntervals(intervals, url);
+      return;
+    }
     // 既に current がある = 視聴中のエピソードに字幕が付いている。
     // この状態で新しい字幕が届くのは「次エピソードのプリロード」のケースが多い（Netflix特有）。
     // そのまま上書きすると視聴中エピソードに次エピソードの cue が混入してしまうので、
@@ -306,6 +319,27 @@
           + 'first=' + f[0].toFixed(2) + 's last_end=' + l[1].toFixed(2) + 's  '
           + 'url=' + url.slice(0, 80));
     }
+  }
+
+  // セグメント化 WebVTT の断片を currentIntervals へマージする (xhr-segmented 用)。
+  // (start, end, text) が一致する cue は重複として捨てる。
+  function mergeSegmentedIntervals(intervals, url) {
+    const existing = STATE.currentIntervals;
+    const keyOf = (iv) => iv[0].toFixed(3) + '|' + iv[1].toFixed(3) + '|' + iv[2];
+    const seen = new Set(existing.map(keyOf));
+    let added = 0;
+    for (const iv of intervals) {
+      const k = keyOf(iv);
+      if (!seen.has(k)) { existing.push(iv); seen.add(k); added++; }
+    }
+    if (added === 0) return;
+    existing.sort((a, b) => a[0] - b[0]);
+    STATE.currentIntervalIdx = -1;
+    STATE.intervalSource = 'xhr';
+    STATE.compressionCache.cueCount = -1;
+    STATE.compressionCache.settingsHash = '';
+    STATE.lastSubtitleHandledAt = Date.now();
+    log('subtitle segment merged: +' + added + ' cues (total ' + existing.length + ')  url=' + url.slice(0, 80));
   }
 
   // TTML2 のパラメータ名前空間
@@ -621,11 +655,22 @@
     const tCue = t - off - adOff;
     let inSpeech = false;
     let usedDomFallback = false;
+    const isSegmented = STATE.adapter && STATE.adapter.subtitleStrategy === 'xhr-segmented';
     if (STATE.currentIntervals.length) {
       const idx = findCueAt(tCue);
       inSpeech = (idx >= 0);
-    } else if (STATE.domObserverActive) {
-      // フォールバック: ネイティブ字幕DOMの観察結果を使う
+      // xhr-segmented (Disney+等): cue はマージ済み範囲しか無い。範囲外(未取得区間)を
+      // 「無音」と断定すると 4x で字幕バッファを追い越して暴走する(会話も高速再生・
+      // エピソードを走り切る)ため、カバレッジ外は音声扱い(speechRate)に倒す。
+      if (!inSpeech && isSegmented) {
+        const first = STATE.currentIntervals[0];
+        const last = STATE.currentIntervals[STATE.currentIntervals.length - 1];
+        if (tCue > last[1] || tCue < first[0] - 30) inSpeech = true;
+      }
+    } else if (STATE.domObserverActive && !isSegmented) {
+      // フォールバック: ネイティブ字幕DOMの観察結果を使う。
+      // xhr-segmented はネイティブ字幕が closed shadow DOM 内で観察不能(常に「無音」に
+      // 見える)ため対象外 → 下の else で音声扱いに落ちる(cue が届くまで安全側)。
       inSpeech = STATE.domSubtitleInSpeech;
       usedDomFallback = true;
     } else {
@@ -663,8 +708,11 @@
       // ネイティブ字幕DOMは常に正しい時刻なので、中央表示はそれに合わせる
       // (ネイティブはCSSで隠し、同じテキストを中央に出す＝二重表示も防ぐ)。
       // 速度判定・圧縮率は引き続き XHR cue を使う。
+      // 例外: xhr-segmented (Disney+等) はネイティブ字幕が closed shadow DOM 内で
+      // DOM監視が届かない (domSubtitleText が常に空) ため、cue 基準の表示に落とす。
       const preferNativeText =
-        STATE.adapter && STATE.adapter.name !== 'netflix' && STATE.domObserverActive;
+        STATE.adapter && STATE.adapter.name !== 'netflix' && STATE.domObserverActive
+        && STATE.adapter.subtitleStrategy !== 'xhr-segmented';
       if (preferNativeText) {
         if (STATE.domSubtitleText) showOverlay(STATE.domSubtitleText);
         else hideOverlay();
@@ -701,7 +749,9 @@
         const pct = Math.round((1 - ratio) * 100);
         // 圧縮率は0–99% (時に100%超もありうるが稀)。3桁分の幅で固定。
         tail = padLeftFig(pct, 3) + i18n('hudCompressedSuffix', '% 圧縮');
-      } else if (!usedDomFallback) {
+      } else if (!usedDomFallback && cueCount === 0) {
+        // cue がある場合は ratio が出せなくても「字幕未取得」とは表示しない
+        // (xhr-segmented は cue があっても ratio 非表示のため)
         if (STATE.interceptorReady) {
           tail = i18n('hudNotCaptured', '字幕未取得');
         } else {
@@ -775,10 +825,16 @@
     // Prime Video
     '.atvwebplayersdk-captions-overlay',
     '.atvwebplayersdk-captions-text',
-    // Disney+
+    // Disney+ (実DOM: div.dss-hls-subtitle-overlay > span.dss-subtitle-renderer-cue
+    //  bugzilla.mozilla.org/1766273 で確認。cue-window があれば複数行を一括で拾える)
+    '.dss-subtitle-renderer-cue-window',
+    '.dss-subtitle-renderer-cue',
+    '.dss-hls-subtitle-overlay',
+    '.dss-subtitle-overlay',
     '.dss-captions-renderer',
     '.dss-subtitle-renderer-line',
     '.btm-media-overlays-container [class*="caption"]',
+    '.btm-media-overlays-container [class*="subtitle"]',
     // Hulu (US/JP)
     '.CaptionBox',
     '.caption-text-box',
@@ -1020,6 +1076,9 @@
     let lastUrl = location.href;
     let lastUrlChangeAt = 0;
     setInterval(() => {
+      // 拡張の再読込で孤児化した旧content scriptは chrome.runtime.id が消える。
+      // その状態で chrome.* を呼ぶと "Extension context invalidated" エラーになるので黙って停止。
+      if (typeof chrome !== 'undefined' && chrome.runtime && !chrome.runtime.id) return;
       if (location.href !== lastUrl) {
         lastUrl = location.href;
         lastUrlChangeAt = Date.now();
@@ -1038,7 +1097,7 @@
               STATE.urlOverrides = null;
             }
             applySettingsImmediate();
-          });
+          }).catch(() => {});
         } catch (e) {}
         if (STATE.pendingIntervals) {
           // プリロード済みの次エピソード字幕を昇格

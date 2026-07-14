@@ -81,11 +81,11 @@ async function samplePage(page) {
   });
 }
 
-async function runScenario(context, name, urlParams, expect) {
+async function runScenario(context, name, pagePath, urlParams, expect, extraChecks) {
   const page = await context.newPage();
   const consoleLogs = [];
   page.on('console', msg => consoleLogs.push(msg.text()));
-  await page.goto(`http://localhost:${PORT}/player.html${urlParams}`);
+  await page.goto(`http://localhost:${PORT}${pagePath}${urlParams}`);
   await page.evaluate(() => document.querySelector('video')?.play().catch(() => {}));
 
   const samples = [];
@@ -119,7 +119,8 @@ async function runScenario(context, name, urlParams, expect) {
     [`無音区間で ${expect.ns}x`]: silenceSamples.some(s => near(s.rate, expect.ns)),
     '中央オーバーレイに字幕表示': samples.some(s => s.overlayText && s.overlayText.includes('音声区間その1')),
     'HUDに音声バッジ': samples.some(s => s.hudText && s.hudText.includes('音声')),
-    'JSエラーなし': !consoleLogs.some(l => /uncaught|TypeError|ReferenceError/i.test(l))
+    'JSエラーなし': !consoleLogs.some(l => /uncaught|TypeError|ReferenceError/i.test(l)),
+    ...(extraChecks ? extraChecks(consoleLogs, samples) : {})
   };
   return { name, checks, samples: samples.length, speechSamples: speechSamples.length, silenceSamples: silenceSamples.length, consoleLogs };
 }
@@ -140,10 +141,16 @@ async function runScenario(context, name, urlParams, expect) {
   });
 
   const results = [];
-  // シナリオ1: デフォルト設定 (ss=1.5 / ns=4.0)
-  results.push(await runScenario(context, 'default', '', { ss: 1.5, ns: 4.0 }));
+  // シナリオ1: デフォルト設定 (ss=1.5 / ns=4.0, texttrack戦略)
+  results.push(await runScenario(context, 'default', '/player.html', '', { ss: 1.5, ns: 4.0 }));
   // シナリオ2: URLパラメータ設定共有 (?ss=2.0&ns=8.0)
-  results.push(await runScenario(context, 'url-override', '?ss=2.0&ns=8.0', { ss: 2.0, ns: 8.0 }));
+  results.push(await runScenario(context, 'url-override', '/player.html', '?ss=2.0&ns=8.0', { ss: 2.0, ns: 8.0 }));
+  // シナリオ3: セグメント化WebVTT (Disney+方式): XHR捕捉→マージ→cue基準表示
+  results.push(await runScenario(context, 'segmented-vtt', '/seg/player.html', '', { ss: 1.5, ns: 4.0 },
+    (logs) => ({
+      'セグメントマージ×2 (逐次到着)': logs.filter(l => l.includes('subtitle segment merged')).length >= 2,
+      'interceptor捕捉 (page world)': logs.some(l => l.includes('interceptor loaded'))
+    })));
 
   await context.close();
   server.close();
