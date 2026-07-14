@@ -39,10 +39,41 @@
     return vids[0];
   }
 
-  // 現在表示されている字幕画像 (happyon.jp のビットマップ) の <img> を列挙する。
-  // 動画幅に近い横長・動画下部・visibility:visible の <img> を字幕とみなす。
-  // 判定は visibility/opacity/display のみで、clip-path(中央表示時の隠し)には触れない
-  // ため、隠しても検出は安定する。
+  // 字幕画像 (happyon.jp のビットマップ) の候補か判定する。
+  // 動画幅に近い横長・動画下部の <img>。ただし中央表示のために自前で作った
+  // コピー(#cg-overlay 内)は同じ happyon.jp src を持つので必ず除外する
+  // (除外しないと自己検出→自分のコピーを隠す無限ループになる)。
+  function isSubtitleImageCandidate(img, vr) {
+    const src = img.currentSrc || img.src || '';
+    if (!/happyon\.jp/i.test(src)) return false;           // hulu.jp の字幕画像CDN
+    if (img.closest && img.closest('#cg-overlay')) return false; // 自前の中央コピーを除外
+    const r = img.getBoundingClientRect();
+    if (r.width < vr.width * 0.3) return false;             // 小さいアイコン等を除外
+    if (r.top < vr.top + vr.height * 0.4) return false;     // 動画下部に位置するもののみ
+    if (r.bottom > vr.bottom + 80) return false;            // 動画外の要素を除外
+    return true;
+  }
+
+  // ネイティブ字幕画像プール全体(表示/非表示問わず)。中央表示時に先回りで隠すのに使う。
+  function allNativeSubtitleImages() {
+    try {
+      const v = findVideo();
+      if (!v) return [];
+      const vr = v.getBoundingClientRect();
+      if (!vr.width || !vr.height) return [];
+      const out = [];
+      const imgs = document.querySelectorAll('img');
+      for (let i = 0; i < imgs.length; i++) {
+        if (isSubtitleImageCandidate(imgs[i], vr)) out.push(imgs[i]);
+      }
+      return out;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 現在「表示されている」字幕画像。判定は visibility/opacity/display のみで
+  // clip-path(隠し)には触れないため、隠しても検出は安定する。
   function subtitleImages() {
     try {
       const v = findVideo();
@@ -53,12 +84,7 @@
       const imgs = document.querySelectorAll('img');
       for (let i = 0; i < imgs.length; i++) {
         const img = imgs[i];
-        const src = img.currentSrc || img.src || '';
-        if (!/happyon\.jp/i.test(src)) continue;           // hulu.jp の字幕画像CDN
-        const r = img.getBoundingClientRect();
-        if (r.width < vr.width * 0.3) continue;             // 小さいアイコン等を除外
-        if (r.top < vr.top + vr.height * 0.4) continue;     // 動画下部に位置するもののみ
-        if (r.bottom > vr.bottom + 80) continue;            // 動画外の要素を除外
+        if (!isSubtitleImageCandidate(img, vr)) continue;
         const cs = getComputedStyle(img);
         if (cs.visibility === 'visible' && cs.display !== 'none' && parseFloat(cs.opacity || '1') > 0.1) {
           out.push(img);
@@ -94,6 +120,7 @@
     subtitleStrategy: 'image-presence',
     isSubtitleImageVisible,
     getSubtitleImages: subtitleImages,
+    getAllNativeSubtitleImages: allNativeSubtitleImages,
     restoreNativeSubtitles
   });
 })();

@@ -811,12 +811,22 @@
       if (isImagePresence) {
         // 画像字幕(Hulu): 表示中の字幕画像を中央に複製表示し、ネイティブ(下部)を隠す。
         // 隠すのは clip-path (検出条件の visibility/opacity/display には触らない=検出が安定)。
+        // ネイティブ字幕画像プール全体を先回りで隠す(新しいcueが出る一瞬に
+        // オリジナルが見えてちらつくのを防ぐ)。自前の中央コピー(#cg-overlay内)は
+        // アダプタ側の候補判定で除外済みなので隠されない。
+        const pool = STATE.adapter.getAllNativeSubtitleImages
+          ? STATE.adapter.getAllNativeSubtitleImages() : [];
+        for (const x of pool) {
+          x.style.setProperty('clip-path', 'inset(100%)', 'important');
+          x.style.setProperty('-webkit-clip-path', 'inset(100%)', 'important');
+        }
         const subImgs = STATE.adapter.getSubtitleImages ? STATE.adapter.getSubtitleImages() : [];
         if (subImgs.length) {
-          const im = subImgs[0];
+          // 同時に複数可視のことがある(縦2行など)。実際の字幕は動画幅に近い最大幅の
+          // ものなので、最大幅を選んで中央複製する。
+          let im = subImgs[0];
           for (const x of subImgs) {
-            x.style.setProperty('clip-path', 'inset(100%)', 'important');
-            x.style.setProperty('-webkit-clip-path', 'inset(100%)', 'important');
+            if (x.getBoundingClientRect().width > im.getBoundingClientRect().width) im = x;
           }
           showOverlayImage(im.currentSrc || im.src, im.getBoundingClientRect().width);
         } else {
