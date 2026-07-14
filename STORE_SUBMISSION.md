@@ -1,4 +1,4 @@
-# Chrome Web Store 提出ガイド (CinemaGazer 0.3.5)
+# Chrome Web Store 提出ガイド (CinemaGazer 0.3.6)
 
 ## 提出手順
 
@@ -8,8 +8,8 @@
    - 連絡先情報・公開者の身分確認 (D-U-N-Sなどは個人なら不要)
 
 2. **新規アイテムを作成**
-   - 既存アイテム(CinemaGazer)を更新する場合は「パッケージ」タブから、新規なら「新しいアイテム」→ `cinemagazer-0.3.5.zip` をアップロード
-   - パッケージのファイル一覧 (18ファイル, 約63KB。`~/Desktop/claude_work/cinemagazer-0.3.5.zip`)
+   - 既存アイテム(CinemaGazer)を更新する場合は「パッケージ」タブから、新規なら「新しいアイテム」→ `cinemagazer-0.3.6.zip` をアップロード
+   - パッケージのファイル一覧 (18ファイル, 約63KB。`~/Desktop/claude_work/cinemagazer-0.3.6.zip`)
 
 3. **ストア掲載情報を入力** (下記テンプレートを貼り付け)
 
@@ -115,7 +115,7 @@ kurihara@tsuda.ac.jp
 
 ## 提出前チェックリスト
 
-- [ ] manifest.json のバージョン (`0.3.5`) が正しいか
+- [ ] manifest.json のバージョン (`0.3.6`) が正しいか
 - [ ] `description` がストア説明文と整合しているか
 - [ ] アイコン 16/48/128 が適切に表示されるか
 - [ ] 開発者モードで読み込んでNetflix/Primeで動作確認
@@ -133,7 +133,7 @@ kurihara@tsuda.ac.jp
 ## 公開後のアップデート
 
 新バージョンを出す場合：
-1. `manifest.json` の `version` を上げる (例: `0.3.5` → `0.3.6`)
+1. `manifest.json` の `version` を上げる (例: `0.3.6` → `0.3.7`)
 2. 新しい ZIP を再パッケージ
 3. デベロッパーコンソールから新バージョンをアップロード → 再審査
 
