@@ -1,11 +1,11 @@
 # CinemaGazer (Chrome拡張版)
 
-> 字幕情報から音声区間を抽出し、音声/非音声で再生速度を動的に切り替えることで極限的な高速動画鑑賞を可能にする Netflix / Prime Video 用の Chrome 拡張。事前データ処理不要で軽量。すぐ使えてすぐ鑑賞開始できます。
+> 字幕情報から音声区間を抽出し、音声/非音声で再生速度を動的に切り替えることで極限的な高速動画鑑賞を可能にする Chrome 拡張。Netflix / Hulu / Disney+ / Amazon Prime Video に対応。事前データ処理不要で軽量。すぐ使えてすぐ鑑賞開始できます。
 
 **🇬🇧 English version of this README is available below — please scroll down to the [English](#english) section.**
 
 ### 手短に説明！
-- NetflixやAmazon Prime Videoを非常識なほど高速に動画鑑賞できる！たとえば30分もののアニメを10分以下で観るのも全然余裕！忙しい現代人に捧げます👍️
+- Netflix / Hulu / Disney+ / Amazon Prime Video を非常識なほど高速に動画鑑賞できる！たとえば30分もののアニメを10分以下で観るのも全然余裕！忙しい現代人に捧げます👍️
 - 人間、物語を理解するときには　(1)セリフが理解できること　(2)物語の全てをちゃんと脳内に通過させること　が大切だと思うんだよね。だからAIに重要なシーンだけカットしてもらって要約する、なんてことはしない！セリフ（つまり字幕）があるところはそのセリフが理解できる速さで再生する。そしてセリフがないところは、ものすごい速さで再生する。それを自動的にやるのがこのCinemaGazer。
 - セリフを耳で聞きたいなら2.0倍くらいが限界かな。でも字幕を目で見て理解するのでよければ、もっと3~5倍とかでも大丈夫かもね。
 - もともとある字幕情報を用いるから、鑑賞前にデータ処理する必要もない。軽量で待ち時間なし。サクサク使えるよ！
@@ -32,8 +32,8 @@
 
 ## 使い方
 
-1. Netflix / Prime Video で動画を再生
-2. （Netflixは自動で字幕ON。Primeは手動で字幕をONに、popup で「Prime Video で有効化」もONに）
+1. Netflix / Hulu / Disney+ / Prime Video で動画を再生
+2. （Netflixは自動で字幕ON。その他はプレイヤー側で字幕をONにする。対応サービスは既定で有効）
 3. 画面右上の表示で現在の速度と圧縮率を確認
 4. 画面右上の表示をクリック or Chromeツールバーの拡張アイコンから設定を開く
 
@@ -49,7 +49,9 @@
 | 字幕オーバーレイ | 動画中央に字幕を表示。ネイティブ字幕は非表示化 | OFF |
 | 速度表示 | 画面右上の表示 | ON |
 | Netflixで有効化 | Netflixで有効化 | ON |
-| Prime Videoで有効化 | Amazno Prime Videoで有効化（実験的） | OFF |
+| Huluで有効化 | Hulu (hulu.jp) で有効化 | ON |
+| Disney+で有効化 | Disney+で有効化 | ON |
+| Prime Videoで有効化 | Amazon Prime Videoで有効化（実験的） | ON |
 
 ## デモビデオ（元システム）
 
@@ -77,8 +79,12 @@
 
 | サイト | ステータス | 備考 |
 |---|---|---|
-| Netflix (`netflix.com`) | ✅ 安定 | 字幕は拡張が自動でONにする |
-| Amazon Prime Video (`primevideo.com`, `amazon.co.jp/gp/video/...`, `amazon.com/...`) | ⚠️ 実験的 | コンテンツによって字幕のタイミングがズレることがあるため既定OFF。popup で有効化可能 |
+| Netflix (`netflix.com`) | ✅ 安定 | 字幕は拡張が自動でONにする。既定ON |
+| Hulu (`hulu.jp`) | ✅ 対応 | 字幕がビットマップ画像のため、字幕画像の表示を監視して発話区間を検出。既定ON |
+| Disney+ (`disneyplus.com`) | ✅ 対応 | セグメント化WebVTTをXHR捕捉。既定ON |
+| Amazon Prime Video (`primevideo.com`, `amazon.co.jp/gp/video/...`, `amazon.com/...`) | ⚠️ 実験的 | サーバサイド広告挿入で字幕のタイミングがズレることがある。既定ONだがpopupで無効化可能 |
+
+> U-NEXT は字幕が映像に焼き込まれており（字幕データを取得できない）、本拡張の発話区間検出が原理的にできないため非対応。
 
 字幕がOFFのコンテンツでは速度切替は無効化されます。
 
@@ -225,11 +231,11 @@ MIT License。詳細は [LICENSE](./LICENSE) を参照。
 
 # English
 
-> A Chrome extension for Netflix / Amazon Prime Video that enables **extremely fast video viewing** by dynamically switching playback rate between speech and non-speech intervals using subtitle timing. No preprocessing required, lightweight — install and start watching right away.
+> A Chrome extension that enables **extremely fast video viewing** by dynamically switching playback rate between speech and non-speech intervals using subtitle timing. Supports Netflix / Hulu / Disney+ / Amazon Prime Video. No preprocessing required, lightweight — install and start watching right away.
 
 ### Quick intro!
 
-- Watch Netflix and Amazon Prime Video at ridiculously high speeds! For example, you can easily finish a 30-minute anime episode in under 10 minutes. Dedicated to busy modern people 👍
+- Watch Netflix / Hulu / Disney+ / Amazon Prime Video at ridiculously high speeds! For example, you can easily finish a 30-minute anime episode in under 10 minutes. Dedicated to busy modern people 👍
 - I think the keys to understanding a story are: (1) being able to follow the dialogue, and (2) actually letting the entire story pass through your brain. So this tool does NOT use AI to "summarize the important scenes only" — instead, parts with dialogue (i.e. with subtitles) are played at a speed where you can still understand the speech, and parts without dialogue are played at an extremely high speed. CinemaGazer does this automatically.
 - If you want to *listen* to the dialogue, around 2.0× is the practical limit. But if you're fine with *reading* the subtitles, 3–5× should still work.
 - Because it uses the existing subtitle data, no preprocessing is needed before watching. Lightweight, no waiting time — snappy.
@@ -254,8 +260,8 @@ Just hit "Add to Chrome" on the store page. After installation, open Netflix and
 
 ## Usage
 
-1. Start playing a video on Netflix or Prime Video.
-2. (Netflix subtitles are auto-enabled. For Prime, enable subtitles manually and turn on "Enable on Prime Video" in the popup.)
+1. Start playing a video on Netflix / Hulu / Disney+ / Prime Video.
+2. (Netflix subtitles are auto-enabled. For the others, enable subtitles in the player. Supported services are enabled by default.)
 3. The top-right indicator shows current rate and overall compression ratio.
 4. Click the top-right indicator or the toolbar icon to open settings.
 
@@ -271,7 +277,9 @@ Just hit "Add to Chrome" on the store page. After installation, open Netflix and
 | Subtitle overlay | Render subtitles in the center; hide native subtitles | OFF |
 | Show indicator | Top-right speed indicator visibility | ON |
 | Enable on Netflix | Enable on Netflix | ON |
-| Enable on Prime Video | Enable on Amazon Prime Video (experimental) | OFF |
+| Enable on Hulu | Enable on Hulu (hulu.jp) | ON |
+| Enable on Disney+ | Enable on Disney+ | ON |
+| Enable on Prime Video | Enable on Amazon Prime Video (experimental) | ON |
 
 ## Demo videos (original system)
 
