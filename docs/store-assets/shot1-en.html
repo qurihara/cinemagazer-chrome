@@ -7,12 +7,10 @@
     background:radial-gradient(120% 90% at 30% 25%,#2a3b57 0%,#141d2e 45%,#0b1019 100%);overflow:hidden}
   .bokeh{position:absolute;border-radius:50%;filter:blur(2px);opacity:.5}
   .frame{position:absolute;inset:70px 70px 190px 70px;border-radius:14px;
-    background:linear-gradient(135deg,#33507a 0%,#20304c 55%,#161f30 100%);
-    box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}
-  .frame .glow{position:absolute;width:520px;height:520px;border-radius:50%;
-    background:radial-gradient(circle,rgba(255,210,140,.35),transparent 60%);left:-80px;top:-120px}
-  .frame .glow2{position:absolute;width:460px;height:460px;border-radius:50%;
-    background:radial-gradient(circle,rgba(120,170,255,.25),transparent 60%);right:-60px;bottom:-100px}
+    background:#0b1019;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}
+  .frame .scene{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .frame .scrim{position:absolute;inset:0;
+    background:radial-gradient(58% 42% at 50% 46%, rgba(0,0,0,.5), rgba(0,0,0,0) 72%)}
   .hud{position:absolute;top:92px;right:92px;z-index:5;
     background:rgba(60,120,200,.9);color:#fff;border-radius:8px;padding:10px 15px;
     font-weight:700;font-size:20px;letter-spacing:.02em;
@@ -28,10 +26,7 @@
   .tag{margin-top:14px;font-size:23px;color:#c7d3e4;font-weight:600}
 </style></head><body>
   <div class="stage">
-    <div class="bokeh" style="width:90px;height:90px;left:180px;top:120px;background:#ffd27a"></div>
-    <div class="bokeh" style="width:60px;height:60px;left:1050px;top:240px;background:#7fb0ff"></div>
-    <div class="bokeh" style="width:120px;height:120px;left:900px;top:120px;background:#ffb27a"></div>
-    <div class="frame"><div class="glow"></div><div class="glow2"></div></div>
+    <div class="frame"><img class="scene" src="shot1-scene.png" alt=""><div class="scrim"></div></div>
     <div class="hud">Speech　1.50×　48% compressed　24:10 left</div>
     <div class="subtitle">Let's move.<br>We end this by dawn.</div>
     <div class="caption">
